@@ -11,7 +11,7 @@ revision before any model is examined.
 1. **Study window (UTC), inclusive of Jan 1, 2021 through Oct 23, 2026.** An hour is identified by its
    `UTC Time at End of Hour` stamp and belongs to the year its interval *starts* in. The window contains the
    hours ending 2021-01-01 01:00 UTC through 2026-10-24 00:00 UTC, 50,928 hours.
-   - The last date with a complete day in the 2026 H2 file is Oct 23. On Oct 24 (local date), 48 BAs lack all
+   - The last date with a complete day in the 2026 H2 file is Oct 23. On Oct 24 (local date), 53 BAs (every BA that reports demand) lack all
      24 demand hours; local Oct 24 begins no earlier than 04:00 UTC for any U.S. BA, so ending the window at
      2026-10-24 00:00 UTC keeps every BA's local Oct 24 out of it.
    - The incomplete final date is cut from the window, so it neither counts as missing nor enters evaluation.
