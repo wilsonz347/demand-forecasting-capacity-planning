@@ -44,15 +44,38 @@ From the owner's manual inspection of `eia930-2026half2-balance.csv` (July 1 to 
 - EIA changed some generation categories in 2025 (battery storage from January 1, 2025; solar and wind splits). Irrelevant for a demand target but relevant if generation columns are ever used.
 - EIA warns about daylight-saving duplicates, missing, and mistimed values, and that demand forecasts are "not meaningfully comparable to actual demand for some BAs".
 
+## Resolved by the owner's second inspection
+
+Compared 2022 H1 and 2026 H2 balance files and read EIA's definitions (https://www.eia.gov/electricity/930-content/about.html). Not independently re-run by Claude.
+
+- **Schema.** Balance: 44 columns in 2022 H1 vs 65 in 2026 H2; the first 20 match, and the difference is mostly finer generation-by-source fields. Subregion: identical 7-column header. Interchange 2022 H1 was not inspected (unverified, and not used). Decision: read only the common columns needed for demand forecasting, selected by name, and assert them on load.
+- **Missing demand.** In 2026 H2, 48 BAs each miss exactly 24 actual-demand values: Hour Numbers 1-24 on 2026-10-24. This is a date-level reporting gap, not scattered missing hours. Decision: do not impute; exclude the incomplete final date from evaluation unless reliable values are recovered. Check whether similar trailing gaps exist in other files.
+- **Field definitions (per EIA, as reported by the owner).**
+  - `Demand (MW)`: reported demand.
+  - `Demand (MW) (Imputed)`: EIA-filled values for missing or anomalous observations, using documented fallback procedures.
+  - `Demand (MW) (Adjusted)`: demand adjusted for commercial arrangements such as pseudo-ties and dynamic scheduling.
+  - `Demand Forecast (MW)`: the BA's day-ahead forecast, the benchmark.
+- **Target decision (provisional).** Train and score on reported `Demand (MW)`, dropping rows where it is missing. Never score on imputed values. Whether the BA's forecast targets reported or adjusted demand is not established; check per BA by comparing forecast error against each demand variant, and record the result.
+
 ## Open questions (to resolve before modeling)
 
-1. **Schema stability.** Do older six-month files (for example 2022 half 1) have the same header as 2026? Compare before concatenating.
-2. **The 24 missing hours.** Several BAs miss exactly 24 demand hours. Is it one trailing incomplete day? Check which dates.
-3. **Imputed vs Adjusted.** Definitions are not yet verified. Decide the target (default: reported `Demand (MW)`) and document why.
-4. **Operator forecast issue time.** When is `Demand Forecast (MW)` produced relative to the hour it covers? Without this, a fair information-set comparison is impossible. Check which BAs have a usable forecast (non-missing, comparable to actual).
-5. **Terms of use.** EIA's page states none; confirm. Confirm the Zenodo record and license if used.
-6. **BA selection rule.** Fix the completeness threshold and the list before looking at model performance.
-7. **Weather.** Source, coverage (the Open-Meteo forecast archive starts in 2021, which limits an honest evaluation window), and BA-to-location mapping. Decide whether the headline uses forecast weather or actual weather as a labeled upper bound.
+1. **Operator forecast issue time.** When is `Demand Forecast (MW)` produced relative to the hour it covers? Without this a fair information-set comparison is impossible. Also check which BAs have a usable forecast.
+2. **Which demand variant the forecast tracks** (reported vs adjusted), per BA.
+3. **Trailing gaps in older files.** Does the "last day missing" pattern recur elsewhere?
+4. **Terms of use.** EIA's page states none; confirm. Confirm the Zenodo record and license if used.
+5. **Weather.** Source, coverage (the Open-Meteo forecast archive starts in 2021, limiting an honest evaluation window), and BA-to-location mapping. Decide whether the headline uses forecast weather or actual weather as a labeled upper bound.
+6. **Anomalous values.** Reported demand can contain spikes, zeros, or negatives. Define a screening rule before modeling and record how many rows it affects.
+
+## BA selection rule (fixed before any modeling)
+
+Computed from data availability only, never from model performance, over the full history planned for use (to be fixed once the year range is chosen):
+
+1. Keep BAs whose reported demand is present for at least 95% of hours in every calendar year used.
+2. Of those, keep BAs whose day-ahead forecast is present for at least 95% of hours, so the benchmark exists.
+3. Rank by mean demand (largest first) and take the top 10, requiring a spread across at least 4 EIA regions where the eligible set allows it.
+4. Write the resulting list and the completeness table into this file and commit them before any model is fit.
+
+The thresholds are provisional; changing them after seeing model results is not allowed.
 
 ## Planned deliverables
 
