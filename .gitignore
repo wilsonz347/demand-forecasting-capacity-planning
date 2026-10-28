@@ -1,0 +1,21 @@
+# Raw and derived data (never commit; see data/README.md)
+data/*
+!data/README.md
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Local files and caches
+*.parquet
+*.zip
+
+# Personal tool settings
+.claude/settings.local.json
+.DS_Store
