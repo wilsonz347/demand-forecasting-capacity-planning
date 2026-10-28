@@ -72,6 +72,6 @@ Frozen as a protocol in [`ba_selection_protocol.md`](ba_selection_protocol.md): 
 
 ## Planned deliverables
 
-- Reproducible pipeline in `src/` with tests.
+- Reproducible pipeline (code in the repo) with tests where they protect a result.
 - A short report (about 5 to 8 pages) stating the question, data, method, results with uncertainty, and limitations.
 - Figures: calibration plot, cost versus cost ratio, per-BA comparison.
