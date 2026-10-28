@@ -66,16 +66,9 @@ Compared 2022 H1 and 2026 H2 balance files and read EIA's definitions (https://w
 5. **Weather.** Source, coverage (the Open-Meteo forecast archive starts in 2021, limiting an honest evaluation window), and BA-to-location mapping. Decide whether the headline uses forecast weather or actual weather as a labeled upper bound.
 6. **Anomalous values.** Reported demand can contain spikes, zeros, or negatives. Define a screening rule before modeling and record how many rows it affects.
 
-## BA selection rule (fixed before any modeling)
+## BA selection rule
 
-Computed from data availability only, never from model performance, over the full history planned for use (to be fixed once the year range is chosen):
-
-1. Keep BAs whose reported demand is present for at least 95% of hours in every calendar year used.
-2. Of those, keep BAs whose day-ahead forecast is present for at least 95% of hours, so the benchmark exists.
-3. Rank by mean demand (largest first) and take the top 10, requiring a spread across at least 4 EIA regions where the eligible set allows it.
-4. Write the resulting list and the completeness table into this file and commit them before any model is fit.
-
-The thresholds are provisional; changing them after seeing model results is not allowed.
+Frozen as a protocol in [`ba_selection_protocol.md`](ba_selection_protocol.md): 95% valid reported-demand and forecast coverage in every year used, top 10 by mean reported demand over a common window, at least 4 EIA regions, deterministic tie-break and repair, imputed demand never counted. The thresholds are provisional until the protocol is finalized and cannot change in response to model results. Outputs go in `ba_selection_results.md` before any model is fit.
 
 ## Planned deliverables
 
