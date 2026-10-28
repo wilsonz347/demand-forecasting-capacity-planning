@@ -31,26 +31,13 @@ A result where the operators' forecast is hard to beat is a valid and useful fin
 - Decision evaluation: cost simulation with the cost ratio **swept**, since the costs are assumptions, not data.
 - Uncertainty: block bootstrap over days or weeks.
 
-## Repository layout
+## Repository contents
 
-```
-src/capacity_planning/   reusable code (loading, features, models, evaluation, decisions)
-tests/                   unit tests
-notebooks/               exploration only; conclusions must be reproducible from src/
-docs/project_brief.md    scope, verified data facts, open questions
-data/                    raw/derived data (git-ignored); see data/README.md
-reports/figures/         figures used in the write-up
-```
+Deliberately minimal; structure is added as the data dictates.
 
-## Setup
-
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-pytest && ruff check .
-```
-
-Data download instructions are in [`data/README.md`](data/README.md).
+- `docs/project_brief.md`: scope, verified data facts, open questions
+- `docs/ba_selection_protocol.md`: frozen rules for choosing balancing authorities
+- `data/README.md`: how to get the data (files are git-ignored)
 
 ## Limitations (known up front)
 

@@ -18,11 +18,16 @@ Nothing in this folder is committed except this file (see `.gitignore`).
 - Historical reanalysis (ERA5) back to 1940, and a historical forecast archive from 2021. Re-check the current
   terms and coverage for the chosen locations.
 
-## Layout (planned)
+## How to get the balance files (manual)
 
-- `data/raw/`        downloaded files, untouched
-- `data/interim/`    cleaned, harmonized tables (Parquet)
-- `data/processed/`  modeling tables
+EIA publishes no stable direct link on its about page, so download through the dashboard:
+
+1. Open the EIA Hourly Electric Grid Monitor dashboard.
+2. Click the Download Data icon (upper right), then the Six-Month Files column.
+3. Choose each period and the **Balance** file. Needed: 2021 H1 through 2026 H2 (12 files). Also grab
+   the reference tables: https://www.eia.gov/electricity/930-content/EIA930_Reference_Tables.xlsx
+4. Put them, unmodified, in `data/raw/`. Record file names, sizes, and download date in `data/MANIFEST.md`
+   (commit the manifest; the data stays ignored).
 
 ## Facts from the author's inspection of `eia930-2026half2-balance.csv` (July 1 to Oct 24, 2026)
 

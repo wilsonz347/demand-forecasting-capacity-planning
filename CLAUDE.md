@@ -31,9 +31,8 @@ An applied data science project: probabilistic hourly demand forecasting plus th
 
 ## Code conventions
 
-- Python >= 3.11, `src/capacity_planning/` layout, tests in `tests/`.
-- Format and lint with `ruff` (line length 100). Run `pytest` and `ruff check .` before committing.
-- Notebooks are for exploration. Anything a conclusion depends on lives in `src/` and is reproducible.
+- Python >= 3.11. Project structure is added only when the work needs it; keep the repo minimal.
+- Anything a conclusion depends on must be reproducible from code in the repo, not only from a notebook.
 - Raw and derived data are git-ignored; never commit them.
 
 ## Git and attribution
