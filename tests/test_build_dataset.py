@@ -1,6 +1,7 @@
 import datetime as dt
 
 import pandas as pd
+import pytest
 
 from demand_forecasting import build_dataset as bd
 
@@ -22,6 +23,19 @@ def test_miso_uses_standard_time_all_year():
     stamps = utc("2021-07-01 05:00")
     assert bd.local_date(pd.Series(["MISO"]), stamps).tolist() == [dt.date(2021, 6, 30)]
     assert bd.local_date(pd.Series(["PJM"]), stamps).tolist() == [dt.date(2021, 7, 1)]
+
+
+def test_fall_back_day_has_25_hours():
+    # Local 2025-11-02 in New York runs 04:00 UTC (00:00 EDT) to 05:00 UTC next day (00:00 EST).
+    hours = pd.Series(pd.date_range("2025-11-02 05:00", periods=25, freq="h", tz="UTC"))
+    assert (bd.local_date(pd.Series(["PJM"] * 25), hours) == dt.date(2025, 11, 2)).all()
+
+
+def test_build_rejects_ba_without_time_zone():
+    df = pd.DataFrame({"ba": ["XXX"], "region": ["SE"], "utc_end": utc("2022-06-01 12:00"),
+                       "demand_mw": 1.0, "forecast_mw": 1.0, "source_file": "f.csv"})
+    with pytest.raises(ValueError):
+        bd.build(df, ["XXX"])
 
 
 def test_split_boundaries_by_local_date():

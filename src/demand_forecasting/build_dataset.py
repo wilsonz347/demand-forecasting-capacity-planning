@@ -60,6 +60,8 @@ def build(df: pd.DataFrame, bas: list[str]) -> pd.DataFrame:
 
     Columns as in COLUMNS, sorted by (ba, utc_end).
     """
+    if missing := set(bas) - TIMEZONES.keys():
+        raise ValueError(f"No time zone for {sorted(missing)}; add them to TIMEZONES")
     kept = df[df["ba"].isin(bas)].drop(columns="source_file")
     kept = kept.assign(local_date=local_date(kept["ba"], kept["utc_end"]))
     kept = kept[kept["local_date"].between(FIRST_DATE, LAST_DATE)]

@@ -155,5 +155,6 @@ Sheets: `BAs` (81 data rows), `Regions`, `BA Subregions`, `BA Connections`, `Ene
 ## Not verified
 
 - That these files match EIA's current published versions (EIA revises data; no published checksums found or checked).
-- DST handling of `Local Time at End of Hour` / `Data Date` (only UTC keys were checked).
+- DST handling of `Local Time at End of Hour` (`Data Date` was later checked row by row for the 10 selected
+  BAs: commit 62f45b6).
 - Why the 2026 H2 demand is missing on Oct 24 (assumed reporting lag, not confirmed).
