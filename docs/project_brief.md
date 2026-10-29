@@ -45,6 +45,20 @@ Measured facts for all 12 balance files (counts, coverage, gaps, duplicates, reg
 - **Columns.** Read only the columns needed, selected by name (position changes between files), and assert them on load.
 - **Incomplete final date.** Do not impute local 2026-10-24 (no demand for any BA); it is outside the study window.
 - **Target (provisional).** Train and score on reported `Demand (MW)`, dropping rows where it is missing. Never score on imputed values. Whether the BA's forecast targets reported or adjusted demand is not established; check per BA by comparing forecast error against each demand variant, and record the result.
+- **Time splits (2026-10-29).** By each BA's local date (EIA's `Data Date`), so no day is split:
+
+  | Split | Local dates | Use |
+  |---|---|---|
+  | Train | 2021-01-01 to 2024-10-23 | Fit models; grows with each validation origin |
+  | Validation | 2024-10-24 to 2025-10-23 | Compare and tune; rolling monthly origins |
+  | Test | 2025-10-24 to 2026-10-23 | Used once at the end; never tuned on |
+
+  Why: 12-month validation and test periods each cover every season; the test is the most recent year.
+  Each origin uses only data available at that time, with the 6 p.m. D-1 input cutoff.
+  The dataset keeps whole local days: it starts at local 2021-01-01 hour 1 and includes the evening of
+  local 2026-10-23 that the UTC selection window cut (4-7 hours per BA). BA selection keeps its frozen
+  UTC window, so its coverage counts differ slightly from the dataset's row counts. Time zones per BA are in `build_dataset.py`; MISO is dated
+  in Eastern Standard Time all year.
 
 ## Open questions (to resolve before modeling)
 
