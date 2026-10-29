@@ -1,0 +1,16 @@
+[project]
+name = "demand-forecasting"
+version = "0.1.0"
+description = "Probabilistic hourly demand forecasting and the capacity-commitment decision it supports."
+requires-python = ">=3.11"
+dependencies = ["pandas>=2.2"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

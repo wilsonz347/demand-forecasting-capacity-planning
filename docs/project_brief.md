@@ -54,7 +54,7 @@ Measured facts for all 12 balance files (counts, coverage, gaps, duplicates, reg
    - Risk: if an operator issues its forecast earlier in the day, our model sees a few more hours of data than it did, which favors us.
    - Check: before claiming a win, repeat the comparison with an earlier cutoff (e.g. 8 a.m. on D-1). If the result only holds at 6 p.m., report it that way.
 2. **Which demand variant the forecast tracks** (reported vs adjusted), per BA.
-3. **Window start.** Every BA lacks its first 5-8 window hours (local Dec 31, 2020, in the 2020 H2 file). Download 2020 H2 or count them as missing.
+3. **Window start.** Every BA lacks its first 5-8 window hours (local Dec 31, 2020, in the 2020 H2 file). **Decided (2026-10-29):** count them as missing.
 4. **Terms of use.** Resolved for EIA: public domain; cite as "Source: U.S. Energy Information Administration (date)". The Zenodo copy is not used.
 5. **Weather.** Source, coverage (the Open-Meteo forecast archive starts in 2021, limiting an honest evaluation window), and BA-to-location mapping. Decide whether the headline uses forecast weather or actual weather as a labeled upper bound.
 6. **Anomalous values.** Reported demand can contain spikes, zeros, or negatives, and non-positive forecasts jumped in 2025 H2 and 2026 H1 (see manifest). Define a screening rule before modeling and record how many rows it affects.

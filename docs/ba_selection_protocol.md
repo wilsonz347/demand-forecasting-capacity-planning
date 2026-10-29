@@ -1,6 +1,6 @@
 # BA selection protocol
 
-Status: **rules and study window frozen; region source and results pending.** The resulting BA list is filled in
+Status: **frozen; results recorded (2026-10-29).** Region source: EIA `Region` column. The resulting BA list is filled in
 `docs/ba_selection_results.md`. No model may be fit or compared until that file is committed.
 The 95% thresholds are provisional until this protocol is finalized; after that they may not change in
 response to model results. If the constraints cannot be met, stop, report the conflict, and propose a rule
