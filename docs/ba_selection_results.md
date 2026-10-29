@@ -1,6 +1,6 @@
 # BA selection results
 
-Produced by `uv run python -m demand_forecasting.ba_selection` at commit `d06d5fd`,
+Produced by `uv run python -m demand_forecasting.ba_selection` at commit `bfc6f30`,
 following [`ba_selection_protocol.md`](ba_selection_protocol.md) (rules and revision 1).
 Recorded on 2026-10-29. **No model had been fit at this time.**
 
@@ -32,7 +32,7 @@ Recorded on 2026-10-29. **No model had been fit at this time.**
 | Window (UTC, hour ending) | 2021-01-01 01:00 to 2026-10-24 00:00, 50,928 hours |
 | Years | 2021-2025 full, 2026 to Oct 23 |
 | Data | 12 EIA-930 balance files, listed in [`data/MANIFEST.md`](../data/MANIFEST.md) |
-| Region source | `Region` column of the balance files; matches the `BAs` sheet (`Region/Country Code`) of `eia930-reference-tables.xlsx` for all 67 BAs |
+| Region source | `Region` column of the balance files; matches the `BAs` sheet (`Region/Country Code`) of `eia930-reference-tables.xlsx` for all 67 BAs (checked by hand, see manifest) |
 | Rules | 95% valid demand and forecast in every year; top 10 by mean valid demand; at least 4 regions |
 | Excluded | AVA, FPC, GVL, LGEE, PSEI, SEC, SPA, TEPC (revision 1) |
 
@@ -68,11 +68,29 @@ Reported so the effect of the rules is visible. The rules were not changed in re
 
 - **Window start**: every BA misses its first 5 (Eastern) to 8 (Pacific) hours. Counted as missing; about 0.1% of 2021.
 - **Final date**: local Oct 24, 2026 has no demand for any BA. It is outside the window, so it is neither counted nor scored.
-- **Other gaps**: none among the 10 selected beyond the window start. Their lowest yearly coverage is 99.4%.
+- **Other gaps**: the 10 selected have no absent rows after the window start, but some hours are missing or <= 0.
+  Their lowest yearly coverage is 99.4%. Invalid hours over the whole window, excluding the window start:
+
+  | BA | Window-start hours | Invalid demand hours | Invalid forecast hours |
+  |---|---:|---:|---:|
+  | PJM | 5 | 142 | 144 |
+  | MISO | 5 | 66 | 72 |
+  | ERCO | 6 | 48 | 48 |
+  | SOCO | 6 | 0 | 5 |
+  | CISO | 8 | 136 | 120 |
+  | TVA | 6 | 5 | 21 |
+  | NYIS | 5 | 11 | 115 |
+  | ISNE | 5 | 5 | 0 |
+  | DUK | 5 | 25 | 50 |
+  | BPAT | 8 | 0 | 0 |
+
+- **Duplicates**: none. The loader stops on any duplicate (BA, hour) instead of counting it as missing,
+  which is stricter than the protocol.
 
 ## Full coverage table
 
 Valid demand % / valid forecast % per year (valid = present and > 0, divided by calendar hours).
+The Reason column is written by hand from the coverage and `ba_report.csv` tables.
 Machine-readable version: `data/derived/ba_selection/coverage.csv` (git-ignored; regenerate with the command above).
 
 | BA | Region | 2021 | 2022 | 2023 | 2024 | 2025 | 2026 | Status | Reason |
