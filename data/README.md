@@ -26,18 +26,9 @@ EIA publishes no stable direct link on its about page, so download through the d
 2. Click the Download Data icon (upper right), then the Six-Month Files column.
 3. Choose each period and the **Balance** file. Needed: 2021 H1 through 2026 H2 (12 files). Also grab
    the reference tables: https://www.eia.gov/electricity/930-content/EIA930_Reference_Tables.xlsx
+   (the copy in `data/raw/` is named `eia930-reference-tables.xlsx`)
 4. Put them, unmodified, in `data/raw/`. Record file names, sizes, and download date in `data/MANIFEST.md`
    (commit the manifest; the data stays ignored).
 
-## Facts from the author's inspection of `eia930-2026half2-balance.csv` (July 1 to Oct 24, 2026)
-
-- 166,872 rows, 65 columns, 60 balancing authorities, about 30 MB.
-- Columns include `Balancing Authority`, `Data Date`, `Hour Number`, `Local Time at End of Hour`,
-  `UTC Time at End of Hour`, `Demand Forecast (MW)`, `Demand (MW)`, `Demand (MW) (Imputed)`,
-  `Demand (MW) (Adjusted)`, net generation by source (reported, imputed, adjusted), and `Region`.
-- Missing demand: 12.49% of rows overall; missing demand forecast: 12.31%. This is concentrated in some
-  balancing authorities: for example one small authority has no demand or forecast at all, while PJM, ERCO,
-  CISO, MISO, and ISNE have no missing forecasts and about 1% missing demand.
-- Missingness must be analyzed per balancing authority, not as one dataset-wide percentage.
-
+Measured facts for every file are in `MANIFEST.md`.
 See `docs/project_brief.md` for open questions.

@@ -11,7 +11,7 @@ revision before any model is examined.
 1. **Study window (UTC), inclusive of Jan 1, 2021 through Oct 23, 2026.** An hour is identified by its
    `UTC Time at End of Hour` stamp and belongs to the year its interval *starts* in. The window contains the
    hours ending 2021-01-01 01:00 UTC through 2026-10-24 00:00 UTC, 50,928 hours.
-   - The last date with a complete day in the 2026 H2 file is Oct 23. On Oct 24 (local date), 48 BAs lack all
+   - The last date with a complete day in the 2026 H2 file is Oct 23. On Oct 24 (local date), 53 BAs (every BA that reports demand) lack all
      24 demand hours; local Oct 24 begins no earlier than 04:00 UTC for any U.S. BA, so ending the window at
      2026-10-24 00:00 UTC keeps every BA's local Oct 24 out of it.
    - The incomplete final date is cut from the window, so it neither counts as missing nor enters evaluation.
@@ -21,6 +21,9 @@ revision before any model is examined.
    2026 = 7,104; total = 50,928.
 3. **Region assignment**: the EIA `Region` value for each BA. Assert that each BA has exactly one in the window;
    if not, report it as a conflict. (Source file to be named in the results file.)
+4. **Excluded BAs** (revision 1): AVA, FPC, GVL, LGEE, PSEI, SEC, SPA, TEPC. EIA's EIA-930 about page says
+   comparing their forecast with actual demand is "not very meaningful", so they cannot give a fair benchmark.
+   They still appear in the coverage table, with reason "excluded: EIA forecast caveat".
 
 Files needed: the six-month balance files 2021 H1 through 2026 H2 (12 files). Only 2022 H1 and 2026 H2 headers have
 been compared so far; check the other ten for the columns used (BA, UTC end-of-hour stamp, `Demand (MW)`,
@@ -43,7 +46,7 @@ been compared so far; check the other ten for the columns used (BA, UTC end-of-h
 ## Algorithm (deterministic)
 
 1. For each BA and each year used, compute reported demand coverage and forecast coverage.
-2. **Eligible set** = BAs with both coverages >= 0.95 in **every** year used.
+2. **Eligible set** = BAs not excluded under input 4, with both coverages >= 0.95 in **every** year used.
 3. Sort eligible BAs by mean demand descending; break ties by BA code ascending. This is the ranking `R`.
 4. Initial selection `S` = first 10 of `R`. (If fewer than 10 are eligible, stop: conflict.)
 5. If `S` spans >= 4 distinct regions, finish.
@@ -88,3 +91,8 @@ In `docs/ba_selection_results.md`:
 Conflict examples: fewer than 10 eligible BAs, fewer than 4 regions available, a BA with more than one region.
 Report the numbers and propose a revision in a separate commit, before any model results exist. State
 explicitly that no model had been fit at the time.
+
+## Revisions
+
+1. **2026-10-29: exclude 8 BAs EIA flags** (input 4, algorithm step 2). Reason: EIA documentation, not data or
+   results. No coverage table had been computed and no model had been fit at the time.
