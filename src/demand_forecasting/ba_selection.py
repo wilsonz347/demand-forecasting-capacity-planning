@@ -44,12 +44,12 @@ def in_window(df: pd.DataFrame) -> pd.Series:
 
 
 def ba_regions(df: pd.DataFrame) -> pd.Series:
-    """Region per BA; raise if any BA has more than one (protocol: a conflict)."""
-    regions = df.groupby("ba", observed=True)["region"].unique()
-    multi = regions[regions.str.len() > 1]
+    """Region per BA; raise if any BA has more than one inside the window (protocol: a conflict)."""
+    inside = df[in_window(df)].groupby("ba", observed=True)["region"].unique()
+    multi = inside[inside.str.len() > 1]
     if not multi.empty:
         raise ValueError(f"BAs with more than one region: {multi.to_dict()}")
-    return regions.str[0].astype(str)
+    return df.groupby("ba", observed=True)["region"].first().astype(str)
 
 
 def coverage_table(df: pd.DataFrame) -> pd.DataFrame:

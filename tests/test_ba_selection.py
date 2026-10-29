@@ -85,3 +85,26 @@ def test_rank_uses_valid_demand_and_drops_excluded():
     ranked = sel.rank_eligible(coverage, df)
     assert ranked["ba"].tolist() == ["AAA"]  # SPA is excluded
     assert ranked["mean_demand_mw"].iloc[0] == 10.0  # 0 and -50 are not valid demand
+
+
+def frame(ba, region, stamps, demand=1.0):
+    return pd.DataFrame({"ba": ba, "region": region, "utc_end": stamps,
+                         "demand_mw": demand, "forecast_mw": 1.0})
+
+
+def test_window_includes_both_end_stamps():
+    stamps = pd.Series([sel.WINDOW_FIRST_END, sel.WINDOW_LAST_END,
+                        sel.WINDOW_LAST_END + pd.Timedelta(hours=1)])
+    assert sel.in_window(pd.DataFrame({"utc_end": stamps})).tolist() == [True, True, False]
+
+
+def test_coverage_gives_zero_for_year_without_rows():
+    table = sel.coverage_table(frame("AAA", "SE", [pd.Timestamp("2021-06-01 01:00", tz="UTC")]))
+    row = table.set_index("year").loc[2023]
+    assert row["rows_present"] == 0 and row["demand_coverage"] == 0 and not row["demand_pass"]
+
+
+def test_two_regions_in_window_is_a_conflict():
+    stamps = pd.date_range("2021-06-01 01:00", periods=2, freq="h", tz="UTC")
+    with pytest.raises(ValueError):
+        sel.ba_regions(frame("AAA", ["SE", "NW"], stamps))
