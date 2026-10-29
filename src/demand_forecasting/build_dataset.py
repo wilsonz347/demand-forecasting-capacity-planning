@@ -18,6 +18,7 @@ TEST_FIRST_END = pd.Timestamp("2025-10-24 01:00", tz="UTC")
 
 SPLITS = pd.CategoricalDtype(["train", "validation", "test"], ordered=True)
 OUT_PATH = ROOT / "data" / "derived" / "dataset.parquet"
+COLUMNS = ["ba", "region", "utc_end", "demand_mw", "forecast_mw", "split"]
 
 
 def assign_split(utc_end: pd.Series) -> pd.Series:
@@ -38,7 +39,7 @@ def build(df: pd.DataFrame, bas: list[str]) -> pd.DataFrame:
     if isinstance(kept["ba"].dtype, pd.CategoricalDtype):  # drop the ~57 BAs not kept
         kept["ba"] = kept["ba"].cat.remove_unused_categories()
         kept["region"] = kept["region"].cat.remove_unused_categories()
-    return kept.sort_values(["ba", "utc_end"], ignore_index=True)
+    return kept[COLUMNS].sort_values(["ba", "utc_end"], ignore_index=True)
 
 
 def main() -> None:

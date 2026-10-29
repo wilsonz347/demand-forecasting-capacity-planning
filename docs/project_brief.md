@@ -55,6 +55,8 @@ Measured facts for all 12 balance files (counts, coverage, gaps, duplicates, reg
 
   Why: 12-month validation and test periods each cover every season; the test is the most recent year.
   Each origin uses only data available at that time, with the 6 p.m. D-1 input cutoff.
+  Open for the scoring step: the UTC boundary falls in the evening of local Oct 23, so one local day
+  straddles each boundary. Decide before scoring whether to assign it by local date or drop it.
 
 ## Open questions (to resolve before modeling)
 
