@@ -1,9 +1,9 @@
 """Screen out implausible values before any forecast is built or scored (brief, question 6).
 
 A value is invalid if it is missing, <= 0, or above SPIKE_FACTOR times the BA's
-SPIKE_QUANTILE of positive train-period demand.
-Only high-side errors are caught; implausible drops that stay > 0 pass. The limit comes from the train split only,
+SPIKE_QUANTILE of positive train-period demand. The limit comes from the train split only,
 so later years cannot shape it. Invalid values become NaN; rows are never dropped here.
+Only high-side errors are caught: implausible drops that stay > 0 pass.
 """
 
 import pandas as pd
