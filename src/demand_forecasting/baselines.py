@@ -2,7 +2,9 @@
 
 Baselines: same hour last week, hour-of-week average over 4 weeks, and the operator's
 day-ahead forecast. Every input is at least 7 days older than the hour it forecasts, so
-all of them respect the 6 p.m. day-before cutoff. The test split is never read.
+all of them respect the 6 p.m. day-before cutoff. Test rows are dropped on load, and
+values are screened first (screening.py). "Last week" is 168 hours in UTC, so for about
+a week after each clock change it is one local hour off.
 Run with `python -m demand_forecasting.baselines`.
 """
 
@@ -10,6 +12,7 @@ import pandas as pd
 
 from demand_forecasting.build_dataset import OUT_PATH as DATASET_PATH
 from demand_forecasting.load import ROOT
+from demand_forecasting.screening import screen
 
 WEEK = pd.Timedelta(days=7)
 N_WEEKS = 4
@@ -69,10 +72,14 @@ def score(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def main() -> None:
-    df = add_baselines(pd.read_parquet(DATASET_PATH))
-    scores = score(df)
+    df = pd.read_parquet(DATASET_PATH)
+    df, spikes = screen(df[df["split"] != "test"])
+    scores = score(add_baselines(df))
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     scores.to_csv(OUT_DIR / "validation_scores.csv", index=False)
+    spikes.to_csv(OUT_DIR / "spikes_removed.csv", index=False)
+    print("Spikes removed (train + validation):")
+    print(spikes.to_string(index=False), end="\n\n")
     print(scores.pivot(index="ba", columns="method", values="mape_pct").round(2))
 
 

@@ -64,3 +64,11 @@ def test_score_uses_same_hours_for_every_method():
 def test_score_ignores_train_and_test():
     df = bl.add_baselines(hourly(np.full(WEEK_H + 1, 100.0), split="test"))
     assert bl.score(df).empty
+
+
+def test_lag_never_crosses_between_bas():
+    a = hourly(np.full(WEEK_H + 1, 10.0), ba="AAA")
+    b = hourly(np.full(WEEK_H + 1, 20.0), ba="BBB")
+    b["utc_end"] += pd.Timedelta(hours=WEEK_H)  # BBB starts where AAA's week ends
+    out = bl.add_baselines(pd.concat([a, b], ignore_index=True))
+    assert out.loc[out["ba"] == "BBB", "last_week"].iloc[:WEEK_H].isna().all()

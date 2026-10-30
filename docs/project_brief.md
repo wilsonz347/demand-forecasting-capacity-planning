@@ -72,6 +72,10 @@ Measured facts for all 12 balance files (counts, coverage, gaps, duplicates, reg
 4. **Terms of use.** Resolved for EIA: public domain; cite as "Source: U.S. Energy Information Administration (date)". The Zenodo copy is not used.
 5. **Weather.** Source, coverage (the Open-Meteo forecast archive starts in 2021, limiting an honest evaluation window), and BA-to-location mapping. Decide whether the headline uses forecast weather or actual weather as a labeled upper bound.
 6. **Anomalous values.** Reported demand can contain spikes, zeros, or negatives, and non-positive forecasts jumped in 2025 H2 and 2026 H1 (see manifest). Define a screening rule before modeling and record how many rows it affects.
+   **Decided (2026-10-29):** a value is invalid if missing, <= 0, or above 1.5 x the BA's 99.9th percentile of
+   valid train-period demand (`screening.py`; same rule for the forecast). Removed in train + validation:
+   PJM 3 demand hours (2021-10-19, up to 2.1 billion MW), SOCO 3 (Feb 2025, 83-92k MW), TVA 1
+   (2024-12-18, 9.97 million MW); no forecast values. All are clear recording errors, not real peaks.
 
 7. **BAs with weak forecasts.** EIA says the forecast-vs-actual comparison is "not very meaningful" for AVA, FPC, GVL, LGEE, PSEI, SEC, SPA, and TEPC. **Decided (2026-10-29):** excluded from selection (protocol revision 1).
 
