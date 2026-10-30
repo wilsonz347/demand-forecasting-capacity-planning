@@ -76,6 +76,8 @@ Measured facts for all 12 balance files (counts, coverage, gaps, duplicates, reg
    valid train-period demand (`screening.py`; same rule for the forecast). Removed in train + validation:
    PJM 3 demand hours (2021-10-19, up to 2.1 billion MW), SOCO 3 (Feb 2025, 83-92k MW), TVA 1
    (2024-12-18, 9.97 million MW); no forecast values. All are clear recording errors, not real peaks.
+   The screen covers the high side only: sudden drops that stay > 0 (e.g. CISO 11,819 MW for one hour on
+   2025-07-31, between ~29,900) pass. Their effect on scores is negligible; revisit if a model is sensitive.
 
 7. **BAs with weak forecasts.** EIA says the forecast-vs-actual comparison is "not very meaningful" for AVA, FPC, GVL, LGEE, PSEI, SEC, SPA, and TEPC. **Decided (2026-10-29):** excluded from selection (protocol revision 1).
 

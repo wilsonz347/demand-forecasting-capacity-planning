@@ -25,3 +25,17 @@ def test_spike_removed_and_real_peak_kept():
 def test_limit_uses_train_only():
     # A huge validation value must not raise the limit it is judged against.
     assert sc.upper_limits(frame([100.0] * 1000, [1e9] * 1000)).iloc[0] == 150.0
+
+
+def test_each_ba_gets_its_own_limit():
+    big, small = frame([1000.0] * 1000, [1200.0]), frame([100.0] * 1000, [1200.0])
+    small["ba"] = "ISNE"
+    out, _ = sc.screen(pd.concat([big, small], ignore_index=True))
+    last = out.groupby("ba")["demand_mw"].last()
+    assert last["TVA"] == 1200.0 and np.isnan(last["ISNE"])  # valid for one, spike for other
+
+
+def test_no_train_rows_is_an_error():
+    import pytest
+    with pytest.raises(ValueError):
+        sc.screen(frame([], [100.0]))
