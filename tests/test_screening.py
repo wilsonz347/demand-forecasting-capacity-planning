@@ -31,8 +31,8 @@ def test_each_ba_gets_its_own_limit():
     big, small = frame([1000.0] * 1000, [1200.0]), frame([100.0] * 1000, [1200.0])
     small["ba"] = "ISNE"
     out, _ = sc.screen(pd.concat([big, small], ignore_index=True))
-    last = out.groupby("ba")["demand_mw"].last()
-    assert last["TVA"] == 1200.0 and np.isnan(last["ISNE"])  # valid for one, spike for other
+    tva, isne = out["demand_mw"].iloc[1000], out["demand_mw"].iloc[-1]  # each BA's validation row
+    assert tva == 1200.0 and np.isnan(isne)  # valid for one, spike for the other
 
 
 def test_no_train_rows_is_an_error():
