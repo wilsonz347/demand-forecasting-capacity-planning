@@ -1,5 +1,6 @@
 import datetime as dt
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -62,3 +63,28 @@ def test_read_station_drops_exact_duplicates_and_rejects_conflicts(tmp_path):
     clash.write_text(head + row + row.replace(",50,", ",51,"))
     with pytest.raises(ValueError):
         wx.read_station(clash)
+
+
+def test_to_hourly_never_extrapolates_past_a_run():
+    run = pd.Timestamp("2025-01-01 12:00", tz="UTC")
+    mos = pd.DataFrame({"runtime": run, "ftime": utc("2025-01-01 18:00", "2025-01-01 21:00"),
+                        "temp_c": [1.0, 4.0], "dewpoint_c": 0.0})
+    out = wx.to_hourly(mos).dropna()
+    assert out["ftime"].min() == mos["ftime"].min() and out["ftime"].max() == mos["ftime"].max()
+
+
+def test_ba_weather_drops_hours_missing_at_any_station(monkeypatch):
+    monkeypatch.setattr(wx, "STATIONS", {"XX": {"KAAA": 1, "KBBB": 1}})
+    run = pd.Timestamp("2025-01-01 12:00", tz="UTC")
+    t1, t2 = utc("2025-01-01 18:00", "2025-01-01 19:00")
+    a = pd.DataFrame({"runtime": run, "ftime": [t1, t2], "temp_c": 1.0, "dewpoint_c": 0.0})
+    b = pd.DataFrame({"runtime": run, "ftime": [t1], "temp_c": 1.0, "dewpoint_c": 0.0})
+    assert wx.ba_weather({"KAAA": a, "KBBB": b})["ftime"].tolist() == [t1]
+
+
+def test_attach_leaves_nan_when_newest_run_is_too_old():
+    target = pd.Timestamp("2025-05-30 18:00", tz="UTC")
+    weather = pd.DataFrame({"ba": "PJM", "runtime": utc("2025-05-27 12:00"), "ftime": target,
+                            "temp_c": 1.0, "dewpoint_c": 0.0})
+    dataset = pd.DataFrame({"ba": ["PJM"], "utc_end": [target], "local_date": [dt.date(2025, 5, 30)]})
+    assert np.isnan(wx.attach_weather(dataset, weather)["temp_c"].iloc[0])

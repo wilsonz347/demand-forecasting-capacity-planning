@@ -78,7 +78,7 @@ Measured facts for all 12 balance files (counts, coverage, gaps, duplicates, reg
    | Forecast weather, not actual | At 6 p.m. on D-1 only the forecast for D is known. Actual weather would be look-ahead (rule 1). |
    | NWS GFS MOS, archived by the Iowa Environmental Mesonet | Each forecast is stamped with its run time, so the cutoff can be proven. It has temperature and dewpoint (humidity) for all of 2021-2026. Free. |
    | Not Open-Meteo | Its Historical Forecast archive stitches the first hours of each run (close to actual weather). Its Previous Runs archive has temperature from 2021-03-24 only, with a gap around Jan 2024, and humidity from 2024. |
-   | Run: latest at or before 12:00 UTC on D-1 | Issued in the U.S. morning, well before the 6 p.m. cutoff, and it covers all of day D. The 12Z run exists every day for all 29 stations except 2025-05-30, where the 06Z run is used. |
+   | Run: latest at or before 12:00 UTC on D-1 | Issued in the U.S. morning, well before the 6 p.m. cutoff, and it covers all of day D. The 12Z run exists every day for all 29 stations except 2025-05-29 (serving D = 2025-05-30), where the 06Z run is used. Temperature is the instant value at the end of each hour. |
    | Linear interpolation (3-hourly to hourly), within one run | Temperature changes smoothly over a few hours. Not interpolating across runs keeps each hour tied to one issue time. |
    | 2-3 airports per BA | A BA covers a large region. Airports near its biggest cities cover most of its demand. |
    | Weights = 2020 Census metro population, fixed | Bigger cities use more electricity. 2020 predates all data (no look-ahead), and the city shares barely change over the window. |

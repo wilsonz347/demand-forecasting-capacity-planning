@@ -34,6 +34,8 @@ MOS_URL = (
     "?station={station}&model=GFS&sts=2020-12-30T00:00Z&ets=2026-10-24T00:00Z&format=csv"
 )
 RUN_HOUR_UTC = 12  # use the latest run issued at or before 12Z on the day before
+MAX_RUN_AGE = pd.Timedelta(hours=24)  # older than this means runs are missing: leave NaN
+LAST_RUN_NEEDED = "2026-10-22 12:00:00"  # serves the last local day, 2026-10-23
 RAW_DIR = ROOT / "data" / "raw" / "weather"
 OUT_PATH = ROOT / "data" / "derived" / "dataset_weather.parquet"
 
@@ -44,11 +46,14 @@ def download(station: str, raw_dir: Path = RAW_DIR) -> Path:
     if path.exists():
         return path
     raw_dir.mkdir(parents=True, exist_ok=True)
-    partial = path.with_suffix(".part")  # renamed only when complete, so a failed run is retried
-    urllib.request.urlretrieve(MOS_URL.format(station=station), partial)
-    if partial.stat().st_size == 0:
+    partial = path.with_suffix(".part")  # renamed only when checked, so a failed run is retried
+    with urllib.request.urlopen(MOS_URL.format(station=station), timeout=300) as resp:
+        partial.write_bytes(resp.read())
+    text = partial.read_text()
+    last_run = text.rstrip().rsplit("\n", 1)[-1].split(",", 1)[0]
+    if not text.startswith("runtime,ftime") or last_run < LAST_RUN_NEEDED:
         partial.unlink()
-        raise ValueError(f"Empty download for {station}")
+        raise ValueError(f"Bad or incomplete download for {station} (last run {last_run!r})")
     partial.rename(path)
     return path
 
@@ -118,14 +123,15 @@ def attach_weather(dataset: pd.DataFrame, weather: pd.DataFrame) -> pd.DataFrame
     """Add weather_run, temp_c, and dewpoint_c to each dataset row.
 
     For each (ba, local_date), use the latest run with runtime <= issue_cutoff, then
-    take that run's value at ftime == utc_end. Rows with no such value get NaN.
+    take that run's value at ftime == utc_end (an instant reading at the end of the hour).
+    Rows with no such value, or whose newest run is over MAX_RUN_AGE old, get NaN.
     """
     weather = weather.astype({"ba": str})
     days = dataset[["ba", "local_date"]].drop_duplicates().astype({"ba": str})
     days = days.assign(cutoff=issue_cutoff(days["local_date"])).sort_values("cutoff")
     runs = weather[["ba", "runtime"]].drop_duplicates().sort_values("runtime")
     chosen = pd.merge_asof(days, runs, left_on="cutoff", right_on="runtime",
-                           by="ba", direction="backward")
+                           by="ba", direction="backward", tolerance=MAX_RUN_AGE)
 
     out = dataset.astype({"ba": str}).merge(
         chosen[["ba", "local_date", "runtime"]].rename(columns={"runtime": "weather_run"}),
@@ -139,6 +145,8 @@ def attach_weather(dataset: pd.DataFrame, weather: pd.DataFrame) -> pd.DataFrame
 def main() -> None:
     hourly = {s: to_hourly(read_station(download(s))) for ba in STATIONS for s in STATIONS[ba]}
     dataset = attach_weather(pd.read_parquet(DATASET_PATH), ba_weather(hourly))
+    if missing := dataset["temp_c"].isna().sum():  # none today; a new gap must be looked at
+        raise ValueError(f"{missing:,} rows have no weather forecast")
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     dataset.to_parquet(OUT_PATH, index=False)
     print(f"Wrote {len(dataset):,} rows; missing temp_c: {dataset['temp_c'].isna().sum()}")
