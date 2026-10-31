@@ -109,7 +109,8 @@ def main() -> None:
 
     scores = score_ranges(df)
 
-    # Save the forecasts too: the capacity decision step reads them.
+    # Save the forecasts too: the capacity decision step reads them. demand_mw is the raw
+    # value, so readers must apply baselines.valid() before scoring against it.
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     keep = ["ba", "utc_end", "local_date", "split", "demand_mw", "forecast_mw", *QUANTILE_COLUMNS]
     df.loc[df["split"] == "validation", keep].to_parquet(OUT_DIR / "validation_percentiles.parquet")

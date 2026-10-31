@@ -83,15 +83,17 @@ def training_rows(df: pd.DataFrame, block_start: dt.date) -> pd.DataFrame:
     return df[usable(df) & (df["local_date"] < day_before_block)]
 
 
-def predict_validation(df: pd.DataFrame, make=make_model, outputs: list[str] | None = None):
+def predict_validation(
+    df: pd.DataFrame, make=make_model, outputs: list[str] | None = None
+) -> pd.Series | pd.DataFrame:
     """Forecast every validation row (NaN where an input is missing).
 
     `make` returns a fresh, unfitted model: ridge by default; other modules pass their own.
     For each BA and each monthly block, fit on that BA's training rows, then predict the
     block. The last block runs to the end of the data.
 
-    Returns a Series (one forecast per row), or, if `outputs` names several columns, a
-    DataFrame with one column per model output (used for percentile forecasts).
+    Returns a Series (one forecast per row), or, if `outputs` is given, a DataFrame with
+    one column per model output (used for percentile forecasts).
     """
     if outputs is None:
         predictions = pd.Series(np.nan, index=df.index)

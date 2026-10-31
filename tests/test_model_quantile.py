@@ -46,6 +46,9 @@ def test_learned_ranges_are_roughly_calibrated():
     df["demand_mw"] += np.random.default_rng(2).normal(0, 5, len(df))
     pred = ml.predict_validation(df, make=mq.make_model, outputs=mq.QUANTILE_COLUMNS)
     val = df["local_date"] >= dt.date(2024, 10, 24)
+
+    # Before any sorting, the model's columns must already run low to high.
+    assert (pred.loc[val, "q95"] >= pred.loc[val, "q05"]).mean() > 0.95
     actual = df.loc[val, "demand_mw"]
     inside = (pred.loc[val, "q10"] <= actual) & (actual <= pred.loc[val, "q90"])
     assert 0.6 <= inside.mean() <= 0.95
