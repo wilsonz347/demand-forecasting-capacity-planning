@@ -7,7 +7,8 @@ to cheaper decisions than the operator's own forecast?
 The case study is the U.S. power grid (EIA-930 hourly data). The same problem appears in inventory,
 staffing, and cloud capacity.
 
-> **Status:** data, BA selection, dataset, baselines, and weather are done. No model has been fit yet.
+> **Status: done.** On the untouched test year, the operator's forecast plus a margin was cheaper
+> than our range forecast in 7 of 10 BAs. See [`docs/results.md`](docs/results.md).
 
 ## Why a range matters
 
@@ -36,6 +37,7 @@ When shortfalls cost more than surpluses, the best amount to commit is a high po
 ## Repository
 
 - `src/demand_forecasting/`: the code (`python -m demand_forecasting.<module>`), tests in `tests/`
+- `docs/results.md`: the answer, with the test-year tables
 - `docs/project_brief.md`: scope, decisions, and open questions
 - `docs/ba_selection_protocol.md` and `docs/ba_selection_results.md`: how the 10 BAs were chosen
 - `data/README.md` and `data/MANIFEST.md`: how to get the data, and what is in it (data is not committed)
