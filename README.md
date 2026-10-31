@@ -1,51 +1,49 @@
 # Demand Forecasting for Capacity Planning
 
-Forecast hourly demand with **calibrated prediction intervals**, then test whether those forecasts lead to **cheaper capacity decisions** than simpler alternatives, including the operators' own day-ahead forecasts.
+**Question:** a planner must decide how much capacity to commit for each hour of tomorrow, before demand is
+known. Running short costs more than having extra. Does a forecast that gives a *range* (not one number) lead
+to cheaper decisions than the operator's own forecast?
 
-The case study is the U.S. electricity grid (EIA-930 hourly balancing-authority data). The structure is the same wherever someone must commit capacity before demand is known and a shortfall costs more than a surplus: retail inventory, call-center staffing, cloud capacity, hospital beds.
+The case study is the U.S. power grid (EIA-930 hourly data). The same problem appears in inventory,
+staffing, and cloud capacity.
 
-> **Status: project set up, analysis not started.** No results exist yet. Every number in this repo will come from code in this repo.
+> **Status:** data, BA selection, dataset, baselines, and weather are done. No model has been fit yet.
 
-## The business question
+## Why a range matters
 
-> A planner must commit capacity for each hour of tomorrow before demand is known. Running short costs more than having a surplus. **How much should they commit, and does a probabilistic forecast beat the alternatives at that decision?**
+When shortfalls cost more than surpluses, the best amount to commit is a high point of the demand range
+(a quantile), not the average. So the forecast must get its ranges right, not just its average.
 
-Optimal commitment under asymmetric costs is a quantile of the demand distribution (the newsvendor result): commit the `c_short / (c_short + c_surplus)` quantile. Good decisions therefore need well-calibrated quantiles, not only a good point forecast.
+## What we test
 
-## Research questions
+1. **Accuracy:** does our model beat simple baselines and the operator's forecast?
+2. **Ranges:** do 80% and 90% ranges contain the actual demand 80% and 90% of the time?
+3. **Cost:** across many shortfall-to-surplus cost ratios, which way of committing capacity is cheapest?
+4. **Robustness:** do the answers hold for each BA, season, and year?
 
-1. **Accuracy.** Does a statistical model beat seasonal-naive, hour-of-week-mean, and the operator's published day-ahead forecast?
-2. **Calibration.** Do the 80% and 90% intervals contain demand 80% and 90% of the time, including on extreme-weather days?
-3. **Decision value.** Under a range of shortfall-to-surplus cost ratios, how does expected cost compare for (a) quantile-based commitment, (b) point forecast plus a fixed margin, (c) operator forecast plus a margin?
-4. **Robustness.** Do the conclusions hold across balancing authorities, seasons, and years?
+"The operator is hard to beat" is a valid answer.
 
-A result where the operators' forecast is hard to beat is a valid and useful finding.
+## How
 
-## Method (planned)
+- 10 large balancing authorities (BAs), chosen by fixed rules before any modeling.
+- Train on 2021-2024, tune on the next year, test once on the final year.
+- Only information available at 6 p.m. the day before (including weather *forecasts*, not actual weather).
+- Simple models: regularized linear and gradient-boosted quantile regression.
+- Costs are assumptions, so results are shown across a range of cost ratios, with bootstrap intervals.
 
-- Data: EIA-930 balance files, a small set of balancing authorities chosen **in advance by a data-completeness rule, not by model performance**.
-- Splits: time-ordered rolling-origin validation; the final test period is untouched until the end.
-- Baselines first: seasonal naive, hour-of-week mean, operator forecast.
-- Models: regularized linear and gradient-boosted quantile regression. No deep learning.
-- Weather: only information that would be available at forecast time (see `docs/project_brief.md`).
-- Decision evaluation: cost simulation with the cost ratio **swept**, since the costs are assumptions, not data.
-- Uncertainty: block bootstrap over days or weeks.
+## Repository
 
-## Repository contents
+- `src/demand_forecasting/`: the code (`python -m demand_forecasting.<module>`), tests in `tests/`
+- `docs/project_brief.md`: scope, decisions, and open questions
+- `docs/ba_selection_protocol.md` and `docs/ba_selection_results.md`: how the 10 BAs were chosen
+- `data/README.md` and `data/MANIFEST.md`: how to get the data, and what is in it (data is not committed)
 
-Deliberately minimal; structure is added as the data dictates.
+## Limits
 
-- `docs/project_brief.md`: scope, verified data facts, open questions
-- `docs/ba_selection_protocol.md`: frozen rules for choosing balancing authorities
-- `data/README.md`: how to get the data (files are git-ignored)
+- Costs are assumed; results are shown as a function of the cost ratio.
+- Results describe forecast and decision quality, not causes.
 
-## Limitations (known up front)
+## Data and license
 
-- Cost parameters are assumptions; conclusions are shown as a function of the cost ratio.
-- Operator forecasts may not be comparable across all balancing authorities, and their issue time still needs to be established.
-- Reported demand contains missing and imputed values; the target definition is documented in the brief.
-- Findings describe forecast and decision performance. They are not causal claims.
-
-## Data and licenses
-
-Code: MIT (see `LICENSE`). Data: EIA-930 from the U.S. Energy Information Administration; weather from Open-Meteo (CC BY 4.0, attribution required). Check each source's current terms before redistributing anything.
+Code: MIT (`LICENSE`). Data: EIA-930 (U.S. Energy Information Administration, public domain) and NWS weather
+forecasts archived by the Iowa Environmental Mesonet, Iowa State University (public domain).

@@ -1,14 +1,11 @@
 # Data manifest
 
-Inventory of `data/raw/` as found on 2026-10-28. Files are unmodified downloads; nothing was cleaned or imputed.
-All numbers below were measured from the files by a read-only, stdlib-only Python pass (`csv`, `hashlib`,
-`zipfile`). That script is not in the repo; the counts should be reproduced by the project loader before any
-conclusion depends on them.
+What is in `data/raw/`, as downloaded on 2026-10-28. Files are unchanged. Counts were measured by a one-off
+script; the project's loader reproduces the totals (3,143,756 rows, 67 BAs).
 
 ## Files
 
-Modified date is the local file mtime (assumed to be the download date). SHA-256 shows the first 12 hex digits.
-UTC range is `UTC Time at End of Hour` (min / max over all rows).
+SHA-256 shows the first 12 characters. UTC range is `UTC Time at End of Hour`.
 
 | File | Bytes | SHA-256 | Modified | Rows | Cols | BAs | First UTC | Last UTC |
 |---|---:|---|---|---:|---:|---:|---|---|
@@ -26,34 +23,18 @@ UTC range is `UTC Time at End of Hour` (min / max over all rows).
 | `eia930-2026half2-balance.csv` | 30,325,808 | `bb941fcb7b5c` | 2026-10-28 | 166,872 | 65 | 60 | 2026-07-01 05:00 | 2026-10-25 07:00 |
 | `eia930-reference-tables.xlsx` | 45,259 | `9d4af4996f13` | 2026-10-28 | | | | | |
 
-Across all 12 balance files: 67 distinct BAs, 13 distinct `Region` values
-(CAL, CAR, CENT, FLA, MIDA, MIDW, NE, NW, NY, SE, SW, TEN, TEX).
+## Checks
 
-## Schema checks
+- All 12 files have the 5 columns we use. Two layouts: 44 columns (to 2024 H1) and 65 (from 2024 H2), so
+  columns are read by name.
+- Timestamps look like `01/01/2021 7:00:00 AM` (UTC, no zone). All parse.
+- No duplicate (BA, hour) pairs, within or across files. Files are cut by local date, so their UTC ranges
+  overlap by a few hours.
+- 67 BAs, 13 regions. Each BA has one region, matching the reference tables (`BAs` sheet).
 
-- All 12 files contain `Balancing Authority`, `UTC Time at End of Hour`, `Demand (MW)`,
-  `Demand Forecast (MW)`, and `Region`.
-- 44 columns in 2021 H1 through 2024 H1; 65 columns from 2024 H2 on. `Region` is column 44 and 65 respectively,
-  so columns must be selected by name, not position.
-- No ragged rows (every row has the header's column count). No non-numeric values in the two demand columns.
+## Missing and invalid values
 
-## Timestamps
-
-- Format: `MM/DD/YYYY H:MM:SS AM|PM`, 12-hour clock, no zone suffix (e.g. `01/01/2021 7:00:00 AM`).
-  Parsed with `%m/%d/%Y %I:%M:%S %p`: **0 failures** in every file.
-- Files are cut on **local** date per BA (`Data Date`), not on UTC. So adjacent files' UTC ranges overlap by a
-  few hours (e.g. 2021 H1 ends 2021-07-01 07:00 UTC, 2021 H2 starts 2021-07-01 05:00 UTC).
-
-## Duplicates
-
-- Duplicate (BA, UTC) pairs within each file: **0** in all 12.
-- Duplicate (BA, UTC) pairs across files: **0**. The UTC overlap above does not produce repeated keys.
-- No daylight-saving duplicates were found (they would show up as within-file duplicates).
-
-## Missing and non-positive values
-
-Missing = empty field. Non-positive = parsed value <= 0. Percentages are of rows in the file (not of
-calendar hours).
+Share of rows in each file.
 
 | File | Demand missing | Demand <= 0 | Forecast missing | Forecast <= 0 |
 |---|---:|---:|---:|---:|
@@ -70,35 +51,12 @@ calendar hours).
 | 2026 H1 | 32,665 (12.54%) | 145 | 32,704 (12.55%) | 2,120 |
 | 2026 H2 | 20,844 (12.49%) | 54 | 20,534 (12.31%) | 472 |
 
-The 2026 H2 row count, column count, BA count, and missing percentages match the owner's earlier manual
-inspection (166,872 / 65 / 60 / 12.49% / 12.31%).
+## Coverage of the study window
 
-## Regions
-
-- No BA has more than one `Region` value, within any file or across all 12 files.
-- Every BA in the files appears in the reference workbook's `BAs` sheet, and its file `Region` equals the
-  workbook's `Region/Country Code` for all 67 BAs.
-
-## Reference workbook (`eia930-reference-tables.xlsx`)
-
-Sheets: `BAs` (81 data rows), `Regions`, `BA Subregions`, `BA Connections`, `Energy Sources`,
-`Date Energy Sources Available`, `Notes`.
-
-- **BA region source: sheet `BAs`, column `Region/Country Code`.** The same sheet has `Time Zone`,
-  `Generation Only BA`, `Active BA`, `Activation Date`, `Retirement Date`.
-- `Regions` maps region code to name and time zone.
-- 14 BAs in the workbook never appear in these files (AESO, BCHA, CEN, CFE, EEI, GRMA, HQT, IESO, MHEB, NBSO,
-  NSB, OVEC, SPC, WAUE); mostly Canadian/Mexican or retired, not checked individually.
-
-## Study window coverage (hours ending 2021-01-01 01:00 through 2026-10-24 00:00 UTC)
-
-- Calendar count of the window: **50,928 hours** (reproduced).
-- **Not fully covered.** The union of all files' stamps misses 5 window hours: ending 2021-01-01 01:00-05:00 UTC.
-  Per BA it is worse, because a BA's first row is its local Jan 1 hour 1: the first 5 (Eastern), 6 (Central),
-  7 (Mountain), or 8 (Pacific) window hours are absent for every BA. Those hours are in the 2020 H2 file,
-  which is not in `data/raw`.
-- Apart from those start hours, the 57 BAs present throughout have no absent window rows (no UTC gaps).
-- 10 BAs do not span the window (first / last UTC stamp; workbook dates in brackets):
+- Window: hours ending 2021-01-01 01:00 to 2026-10-24 00:00 UTC (50,928 hours).
+- Every BA misses its first 5-8 window hours (local Dec 31, 2020, in a file we don't have).
+- Otherwise, the 57 BAs present throughout have no missing hours.
+- 10 BAs start or stop during the window:
 
 | BA | First UTC | Last UTC | Workbook |
 |---|---|---|---|
@@ -113,48 +71,21 @@ Sheets: `BAs` (81 data rows), `Regions`, `BA Subregions`, `BA Connections`, `Ene
 | BHBA | 2026-04-01 07:00 | 2026-10-25 06:00 | activated 4/1/2026 |
 | SWPW | 2026-04-01 06:00 | 2026-10-25 05:00 | activated 4/1/2026 |
 
-- BAs with no `Demand (MW)` value in any row of a file (all are generation-only per the workbook): AVRN, DEAA,
-  GRID, GWA, SEPA, YAD in every file; GLHB, GRIF, HGMA, WWA while present; SIKE from 2025 H1.
+- Generation-only BAs report no demand: AVRN, DEAA, GLHB, GRID, GRIF, GWA, HGMA, SEPA, SIKE, WWA, YAD.
 
-## Trailing gaps at file ends
+## Gaps at file ends
 
-- **2026 H2:** the file has rows for local 2026-10-24, but for all **53** BAs that report demand, all 24 demand
-  values on local 10/24 are missing (1,272 rows). `Demand Forecast (MW)` is present on all 1,272 of those rows.
-  Each of the 53 BAs' last reported demand is local 10/24 00:00 (end of local Oct 23). The other 7 BAs in the
-  file report no demand at all and have no 10/24 rows.
-- **Other boundaries:** no market-wide trailing gap. Single BAs miss demand for the whole last local day(s):
-  - FMPP: 12/31/2022, 12/31/2023, 12/31/2024 (last day of three H2 files)
-  - JEA: 12/31/2024
-  - IID: 06/29/2024; SCEG: 06/30/2024
-  - The other last-demand stamps before a file's end are retirements (AEC 2021-09-01; WACM, WAUW 2026-04-01).
+- **Last file:** local Oct 24, 2026 has no demand for any of the 53 BAs that report it (forecasts are
+  present). This day is outside the study window.
+- **Other files:** no common gap. A few BAs miss their last day: FMPP (Dec 31 of 2022, 2023, 2024), JEA
+  (Dec 31, 2024), IID (Jun 29, 2024), SCEG (Jun 30, 2024).
 
-## Surprising (separate from the facts above)
+## Worth knowing
 
-1. **The window start cannot be covered by these 12 files.** Protocol expects 8,760 hours for 2021 per BA, but
-   every BA lacks its first 5-8 hours (local Dec 31, 2020, in the 2020 H2 file). Either add 2020 H2 or count them
-   as missing; under the protocol as written they count as missing (tiny vs a 5% budget, but the acceptance test
-   on expected hours passes while rows_present will not equal it).
-2. **53, not 48, BAs miss local Oct 24.** The brief says 48 BAs miss exactly 24 values. Measured: 53 miss all 24
-   hours of local 10/24. Likely the 48 counted BAs whose *total* file missing was exactly 24 (the other 5 have
-   additional gaps); not verified.
-3. **Forecasts exist on the day demand is missing** (local Oct 24). Consistent with a day-ahead forecast issued
-   before the actuals are reported. Says nothing yet about issue time.
-4. **The file ends at local Oct 24, not Oct 23.** Last UTC stamp is 2026-10-25 07:00. The window cut at
-   2026-10-24 00:00 UTC is still correct, but it also drops hours ending 01:00-07:00 UTC Oct 24 that *do* have
-   demand for Central/Mountain/Pacific BAs (local Oct 23 evening).
-5. **Non-positive forecasts jumped** from tens per file to 1,074 (2025 H2) and 2,120 (2026 H1). By year, the
-   largest counts are SPA (502 in 2025, 1,377 in 2026), FMPP (518 in 2025), CPLW (600 in 2026), CPLE (480 in 2026).
-   CPLE and FMPP are mid-size BAs; this may matter for forecast coverage under the protocol.
-6. **WACM and WAUW retired on 2026-04-01; BHBA and SWPW started that day,** all in region NW. WACM/WAUW will fail
-   2026 coverage under "every year used"; BHBA/SWPW fail all earlier years.
-7. **FMPP misses its last local day in three consecutive H2 files** (Dec 31, 2022-2024). A BA-specific pattern
-   worth watching if FMPP is near the cutoff.
-8. The workbook's file name is `eia930-reference-tables.xlsx`, not `EIA930_Reference_Tables.xlsx` as in
-   `data/README.md`.
+- Forecasts <= 0 jumped in 2025 H2 (1,074) and 2026 H1 (2,120), mostly SPA, FMPP, CPLW, CPLE.
+- WACM and WAUW stopped on 2026-04-01; BHBA and SWPW started that day (all in region NW).
 
-## Not verified
+## Not checked
 
-- That these files match EIA's current published versions (EIA revises data; no published checksums found or checked).
-- DST handling of `Local Time at End of Hour` (`Data Date` was later checked row by row for the 10 selected
-  BAs: commit 62f45b6).
-- Why the 2026 H2 demand is missing on Oct 24 (assumed reporting lag, not confirmed).
+- Whether these files match EIA's current versions (EIA revises data).
+- Why demand is missing on Oct 24, 2026 (probably a reporting delay).
