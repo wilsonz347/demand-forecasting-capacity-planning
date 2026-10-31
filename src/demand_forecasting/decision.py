@@ -10,7 +10,9 @@ Two strategies, compared on exactly the same validation hours:
 - operator: commit the operator's forecast plus a fixed margin per BA. The margin is the
             same percentile of the operator's past errors, learned from the train years only.
 
-Costs are assumptions, so several ratios are tested. Validation year only; the test year
+Costs are assumptions, so several ratios are tested. Caveat: the operator's forecast may be
+issued later than our 6 p.m. cutoff (its issue time is undocumented), and its margin is one
+constant per BA. Validation year only; the test year
 is not read. Run with `python -m demand_forecasting.decision`.
 """
 
@@ -81,6 +83,8 @@ def compare(validation: pd.DataFrame, margins: pd.DataFrame) -> pd.DataFrame:
         # What each strategy commits for every hour.
         range_commit = rows[percentile]
         operator_commit = rows["operator"] + rows["ba"].map(margins[ratio])
+        if operator_commit.isna().any():  # a BA without a margin would silently drop hours
+            raise ValueError(f"No operator margin for {sorted(rows.loc[operator_commit.isna(), 'ba'].unique())}")
 
         costs = pd.DataFrame({
             "ba": rows["ba"],
@@ -98,7 +102,7 @@ def compare(validation: pd.DataFrame, margins: pd.DataFrame) -> pd.DataFrame:
 
     results = pd.concat(results, ignore_index=True)
 
-    # How much cheaper the range forecast was, in % of the operator's cost.
+    # How much cheaper the range forecast was, in % of the operator's cost (never 0 in practice).
     difference = results["operator_cost"] - results["range_cost"]
     results["saving_pct"] = 100 * difference / results["operator_cost"]
 
