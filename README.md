@@ -16,9 +16,10 @@ When shortfalls cost more than surpluses, the best amount to commit is a high po
 
 ## What we test
 
-1. **Accuracy:** does our model beat simple baselines and the operator's forecast?
-2. **Ranges:** do 80% and 90% ranges contain the actual demand 80% and 90% of the time?
-3. **Cost:** across many shortfall-to-surplus cost ratios, which way of committing capacity is cheapest?
+1. **Accuracy:** does our model beat simple baselines (same hour last week, 4-week average) and the operator?
+2. **Ranges:** do 80% and 90% ranges contain the actual demand 80% and 90% of the time, even on extreme days?
+3. **Cost:** across many shortfall-to-surplus cost ratios, which is cheapest: committing a quantile of our
+   range, our forecast plus a fixed margin, or the operator's forecast plus a margin?
 4. **Robustness:** do the answers hold for each BA, season, and year?
 
 "The operator is hard to beat" is a valid answer.
@@ -26,8 +27,9 @@ When shortfalls cost more than surpluses, the best amount to commit is a high po
 ## How
 
 - 10 large balancing authorities (BAs), chosen by fixed rules before any modeling.
-- Train on 2021-2024, tune on the next year, test once on the final year.
-- Only information available at 6 p.m. the day before (including weather *forecasts*, not actual weather).
+- Train on 2021 to Oct 2024, tune on the next 12 months, test once on the final 12 months.
+- Only information available at 6 p.m. the day before (a provisional cutoff), including weather *forecasts*,
+  not actual weather.
 - Simple models: regularized linear and gradient-boosted quantile regression.
 - Costs are assumptions, so results are shown across a range of cost ratios, with bootstrap intervals.
 
@@ -41,6 +43,7 @@ When shortfalls cost more than surpluses, the best amount to commit is a high po
 ## Limits
 
 - Costs are assumed; results are shown as a function of the cost ratio.
+- Some operators' forecasts may not be directly comparable with reported demand.
 - Results describe forecast and decision quality, not causes.
 
 ## Data and license

@@ -28,9 +28,10 @@ SHA-256 shows the first 12 characters. UTC range is `UTC Time at End of Hour`.
 - All 12 files have the 5 columns we use. Two layouts: 44 columns (to 2024 H1) and 65 (from 2024 H2), so
   columns are read by name.
 - Timestamps look like `01/01/2021 7:00:00 AM` (UTC, no zone). All parse.
-- No duplicate (BA, hour) pairs, within or across files. Files are cut by local date, so their UTC ranges
+- No duplicate (BA, hour) pairs, within or across files (so no daylight-saving duplicates). Files are cut by local date, so their UTC ranges
   overlap by a few hours.
-- 67 BAs, 13 regions. Each BA has one region, matching the reference tables (`BAs` sheet).
+- 67 BAs, 13 regions. Each BA has one region, matching the reference tables (`BAs` sheet). 14 BAs in the
+  reference tables never appear in the files (mostly Canadian, Mexican, or retired).
 
 ## Missing and invalid values
 
@@ -88,4 +89,5 @@ Share of rows in each file.
 ## Not checked
 
 - Whether these files match EIA's current versions (EIA revises data).
+- The `Local Time at End of Hour` column around clock changes (`Data Date` was checked for the 10 selected BAs).
 - Why demand is missing on Oct 24, 2026 (probably a reporting delay).
