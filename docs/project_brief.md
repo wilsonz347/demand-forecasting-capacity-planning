@@ -70,7 +70,12 @@ Measured facts for all 12 balance files (counts, coverage, gaps, duplicates, reg
 2. **Which demand variant the forecast tracks** (reported vs adjusted), per BA.
 3. **Window start.** Every BA lacks its first 5-8 window hours (local Dec 31, 2020, in the 2020 H2 file). **Decided (2026-10-29):** count them as missing.
 4. **Terms of use.** Resolved for EIA: public domain; cite as "Source: U.S. Energy Information Administration (date)". The Zenodo copy is not used.
-5. **Weather.** Source, coverage (the Open-Meteo forecast archive starts in 2021, limiting an honest evaluation window), and BA-to-location mapping. Decide whether the headline uses forecast weather or actual weather as a labeled upper bound.
+5. **Weather.** **Decided (2026-10-30):** forecast weather only (actual weather would be look-ahead).
+   - Source: NWS airport forecasts (temperature, dewpoint), archived by Iowa State (IEM). Public domain.
+   - For local day D: the 12:00 UTC run of D-1, issued well before the 6 p.m. cutoff.
+   - Hourly values by linear interpolation. Per BA: 2-3 big-city airports, weighted by 2020 population.
+   - Why this source: each forecast is time-stamped, and humidity is available for all years.
+   - Caveats: BPAT's city weights are rough; the exact publication time of each run is not documented.
 6. **Anomalous values.** Reported demand can contain spikes, zeros, or negatives, and non-positive forecasts jumped in 2025 H2 and 2026 H1 (see manifest). Define a screening rule before modeling and record how many rows it affects.
    **Decided (2026-10-29):** a value is invalid if missing, <= 0, or above 1.5 x the BA's 99.9th percentile of
    valid train-period demand (`screening.py`; same rule for the forecast). Removed in train + validation:

@@ -13,10 +13,11 @@ Nothing in this folder is committed except this file (see `.gitignore`).
   matches EIA's files before relying on it.
 - EIA's terms of use were not stated on the pages read. Confirm before publishing derived data.
 
-**Open-Meteo (weather)**
-- Free for non-commercial use, data licensed CC BY 4.0 with attribution ("Weather data by Open-Meteo.com").
-- Historical reanalysis (ERA5) back to 1940, and a historical forecast archive from 2021. Re-check the current
-  terms and coverage for the chosen locations.
+**NWS GFS MOS forecasts (weather), via the Iowa Environmental Mesonet**
+- Archived airport-station forecasts: https://mesonet.agron.iastate.edu/mos/
+- Downloaded by `python -m demand_forecasting.weather` into `data/raw/weather/` (one CSV per station).
+- Public domain per the IEM disclaimer (https://mesonet.agron.iastate.edu/disclaimer.php); attribution appreciated.
+  Open-Meteo was the considered fallback.
 
 ## How to get the balance files (manual)
 
