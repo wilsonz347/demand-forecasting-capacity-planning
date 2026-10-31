@@ -10,14 +10,18 @@ It is checked two ways on validation:
 - coverage: does the 10-90% range contain actual demand about 80% of the time, and the
   5-95% range about 90%?
 
-The test split is dropped on load. Run with `python -m demand_forecasting.model_quantile`.
+Run with `python -m demand_forecasting.model_quantile` (validation; the test split is dropped),
+or `... model_quantile test` for the one-time final run on the test year.
 """
+
+import sys
 
 import numpy as np
 import pandas as pd
 from xgboost import XGBRegressor
 
 from demand_forecasting import baselines, model_gbm, model_linear
+from demand_forecasting.build_dataset import TEST_FIRST_DATE, VALIDATION_FIRST_DATE
 from demand_forecasting.load import ROOT
 
 # Percentiles to forecast: 0.05, 0.10, ..., 0.95.
@@ -67,14 +71,14 @@ def quantile_loss(actual: pd.Series, forecast: pd.Series, q: float) -> pd.Series
     return pd.Series(loss, index=actual.index)
 
 
-def score_ranges(df: pd.DataFrame) -> pd.DataFrame:
-    """Per BA on validation: mean quantile loss (over all QUANTILES) and range coverage.
+def score_ranges(df: pd.DataFrame, split: str = "validation") -> pd.DataFrame:
+    """Per BA on `split`: mean quantile loss (over all QUANTILES) and range coverage.
 
     Scored hours: valid actual demand and every percentile present.
     Returns ba, hours, quantile_loss_mw, and one coverage column per RANGES entry, e.g.
     coverage_q10_q90 (should be near 0.80).
     """
-    rows = df[df["split"] == "validation"].copy()
+    rows = df[df["split"] == split].copy()
     rows["actual"] = baselines.valid(rows["demand_mw"])
     rows = rows.dropna(subset=["actual", *QUANTILE_COLUMNS])
 
@@ -100,24 +104,33 @@ def score_ranges(df: pd.DataFrame) -> pd.DataFrame:
     return scores.reset_index()
 
 
-def main() -> None:
+def main(split: str = "validation") -> None:
     df = pd.read_parquet(model_linear.FEATURES_PATH)
-    df = df[df["split"] != "test"]  # the test year stays untouched
 
-    percentiles = model_linear.predict_validation(df, make=make_model, outputs=QUANTILE_COLUMNS)
+    if split == "validation":
+        df = df[df["split"] != "test"]  # the test year stays untouched
+        first_date = VALIDATION_FIRST_DATE
+    elif split == "test":
+        first_date = TEST_FIRST_DATE  # final run: train on everything before each test month
+    else:
+        raise ValueError(f"split must be 'validation' or 'test', not {split!r}")
+
+    percentiles = model_linear.predict_validation(
+        df, make=make_model, outputs=QUANTILE_COLUMNS, first_date=first_date
+    )
     df[QUANTILE_COLUMNS] = fix_crossing(percentiles)
 
-    scores = score_ranges(df)
+    scores = score_ranges(df, split)
 
     # Save the forecasts too: the capacity decision step reads them. demand_mw is the raw
     # value, so readers must apply baselines.valid() before scoring against it.
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     keep = ["ba", "utc_end", "local_date", "split", "demand_mw", "forecast_mw", *QUANTILE_COLUMNS]
-    df.loc[df["split"] == "validation", keep].to_parquet(OUT_DIR / "validation_percentiles.parquet")
-    scores.to_csv(OUT_DIR / "validation_scores.csv", index=False)
+    df.loc[df["split"] == split, keep].to_parquet(OUT_DIR / f"{split}_percentiles.parquet")
+    scores.to_csv(OUT_DIR / f"{split}_scores.csv", index=False)
 
     print(scores.round(3).to_string(index=False))
 
 
 if __name__ == "__main__":
-    main()
+    main(*sys.argv[1:])
