@@ -54,3 +54,15 @@ def test_predicts_even_when_actual_demand_is_missing():
     df = daily_frame(dt.date(2023, 10, 24), 730)
     df.loc[df.index[-1], "demand_mw"] = np.nan
     assert not np.isnan(ml.predict_validation(df).iloc[-1])
+
+
+def test_blocks_can_start_at_the_test_year():
+    starts = ml.block_starts(dt.date(2025, 10, 24))
+    assert starts[0] == dt.date(2025, 10, 24) and starts[-1] == dt.date(2026, 9, 24)
+
+
+def test_test_run_predicts_only_the_test_year():
+    df = daily_frame(dt.date(2023, 10, 24), 1095)  # three years
+    pred = ml.predict_validation(df, first_date=dt.date(2025, 10, 24))
+    test = df["local_date"] >= dt.date(2025, 10, 24)
+    assert pred[~test].isna().all() and pred[test].notna().all()

@@ -55,11 +55,12 @@ def make_model():
     return make_pipeline(preprocess, Ridge(alpha=ALPHA))
 
 
-def block_starts() -> list[dt.date]:
-    """First local date of each validation block: Oct 24, Nov 24, and so on."""
-    starts = pd.date_range(
-        VALIDATION_FIRST_DATE, periods=N_BLOCKS, freq=pd.DateOffset(months=1)
-    )
+def block_starts(first_date: dt.date = VALIDATION_FIRST_DATE) -> list[dt.date]:
+    """First local date of each monthly block, from first_date: Oct 24, Nov 24, and so on.
+
+    first_date is VALIDATION_FIRST_DATE for validation, TEST_FIRST_DATE for the final test.
+    """
+    starts = pd.date_range(first_date, periods=N_BLOCKS, freq=pd.DateOffset(months=1))
     return [start.date() for start in starts]
 
 
@@ -84,7 +85,10 @@ def training_rows(df: pd.DataFrame, block_start: dt.date) -> pd.DataFrame:
 
 
 def predict_validation(
-    df: pd.DataFrame, make=make_model, outputs: list[str] | None = None
+    df: pd.DataFrame,
+    make=make_model,
+    outputs: list[str] | None = None,
+    first_date: dt.date = VALIDATION_FIRST_DATE,
 ) -> pd.Series | pd.DataFrame:
     """Forecast every validation row (NaN where an input is missing).
 
@@ -94,13 +98,16 @@ def predict_validation(
 
     Returns a Series (one forecast per row), or, if `outputs` is given, a DataFrame with
     one column per model output (used for percentile forecasts).
+
+    first_date sets the year being forecast: validation by default, or TEST_FIRST_DATE for
+    the one-time test run (then df must include the test rows).
     """
     if outputs is None:
         predictions = pd.Series(np.nan, index=df.index)
     else:
         predictions = pd.DataFrame(np.nan, index=df.index, columns=outputs)
 
-    starts = block_starts()
+    starts = block_starts(first_date)
     ends = starts[1:] + [None]
 
     for _, ba_rows in df.groupby("ba", observed=True):

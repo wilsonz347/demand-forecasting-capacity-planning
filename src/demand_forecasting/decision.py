@@ -5,16 +5,21 @@ For each hour, a planner commits capacity before demand is known.
 - Short by 1 MW costs RATIO; extra by 1 MW costs 1.
 - The best amount to commit is the RATIO / (RATIO + 1) percentile of demand.
 
-Two strategies, compared on exactly the same validation hours:
+Two strategies, compared on exactly the same hours:
 - range:    commit our forecast's percentile for that ratio (from model_quantile).
 - operator: commit the operator's forecast plus a fixed margin per BA. The margin is the
-            same percentile of the operator's past errors, learned from the train years only.
+            same percentile of the operator's past errors, from earlier years only.
 
-Costs are assumptions, so several ratios are tested. Caveat: the operator's forecast may be
-issued later than our 6 p.m. cutoff (its issue time is undocumented), and its margin is one
-constant per BA. Validation year only; the test year
-is not read. Run with `python -m demand_forecasting.decision`.
+Costs are assumptions, so several ratios are tested.
+
+Caveats: the operator's forecast may be issued later than our 6 p.m. cutoff (its issue time
+is undocumented), and its margin is one constant per BA.
+
+Run with `python -m demand_forecasting.decision` for validation, or
+`python -m demand_forecasting.decision test` for the one-time final run.
 """
+
+import sys
 
 import pandas as pd
 
@@ -110,19 +115,24 @@ def compare(validation: pd.DataFrame, margins: pd.DataFrame) -> pd.DataFrame:
     return results[columns]
 
 
-def main() -> None:
-    features = pd.read_parquet(FEATURES_PATH)
-    margins = operator_margins(features[features["split"] == "train"])
+def main(split: str = "validation") -> None:
+    if split not in ("validation", "test"):
+        raise ValueError(f"split must be 'validation' or 'test', not {split!r}")
 
-    validation = pd.read_parquet(QUANTILE_DIR / "validation_percentiles.parquet")
-    results = compare(validation, margins)
+    # The operator's margin may only use years before the one being scored.
+    features = pd.read_parquet(FEATURES_PATH)
+    earlier_years = ["train"] if split == "validation" else ["train", "validation"]
+    margins = operator_margins(features[features["split"].isin(earlier_years)])
+
+    forecasts = pd.read_parquet(QUANTILE_DIR / f"{split}_percentiles.parquet")
+    results = compare(forecasts, margins)
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    results.to_csv(OUT_DIR / "validation_costs.csv", index=False)
+    results.to_csv(OUT_DIR / f"{split}_costs.csv", index=False)
 
-    print("Saving of the range forecast vs operator + margin (%, positive = range cheaper):")
+    print(f"{split}: saving of the range forecast vs operator + margin (%, positive = range cheaper):")
     print(results.pivot(index="ba", columns="ratio", values="saving_pct").round(1))
 
 
 if __name__ == "__main__":
-    main()
+    main(*sys.argv[1:])
