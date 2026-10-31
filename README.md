@@ -32,12 +32,15 @@ When shortfalls cost more than surpluses, the best amount to commit is a high po
 - Train on 2021 to Oct 2024, tune on the next 12 months, test once on the final 12 months.
 - Only information available at 6 p.m. the day before (a provisional cutoff), including weather *forecasts*,
   not actual weather.
-- Simple models: regularized linear and gradient-boosted quantile regression.
-- Costs are assumptions, so results are shown across a range of cost ratios, with bootstrap intervals.
+- Models: ridge regression and XGBoost for single-number forecasts; XGBoost with the quantile
+  loss for ranges (5th to 95th percentile). One model per BA, refit monthly.
+- Decision: for each cost ratio (1, 3, 9, 19), commit our matching percentile, or the operator's
+  forecast plus a margin learned from its past errors. Compare the average cost per hour.
 
 ## Repository
 
 - `src/demand_forecasting/`: the code (`python -m demand_forecasting.<module>`), tests in `tests/`
+  (run `uv run pytest -q`)
 - `docs/results.md`: the answer, with the test-year tables
 - `docs/project_brief.md`: scope, decisions, and open questions
 - `docs/ba_selection_protocol.md` and `docs/ba_selection_results.md`: how the 10 BAs were chosen
@@ -46,6 +49,7 @@ When shortfalls cost more than surpluses, the best amount to commit is a high po
 ## Limits
 
 - Costs are assumed; results are shown as a function of the cost ratio.
+- No confidence intervals, and the 8 a.m. cutoff check was not done.
 - Some operators' forecasts may not be directly comparable with reported demand.
 - Results describe forecast and decision quality, not causes.
 
