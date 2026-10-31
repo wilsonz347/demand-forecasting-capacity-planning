@@ -1,20 +1,24 @@
-"""Load the EIA-930 balance files into one tidy frame.
+"""Load the EIA-930 balance files into one table.
 
-Reads only the columns this project needs, by name (the files come in a 44- and a
-65-column version). Does not clean, drop, or impute anything: that is a decision for
-later steps. Facts about the files are in data/MANIFEST.md.
+Reads only the five columns this project needs, by name, because the files come in two
+layouts (44 and 65 columns). Nothing is cleaned, dropped, or filled in here; later steps
+decide that. Facts about the files are in data/MANIFEST.md.
 """
 
 from pathlib import Path
 
 import pandas as pd
 
+# --- Paths -------------------------------------------------------------------------------
+
 ROOT = Path(__file__).resolve().parents[2]
 RAW_DIR = ROOT / "data" / "raw"
 FILE_GLOB = "eia930-*-balance.csv"
 EXPECTED_FILES = 12
 
-# Raw column name -> name used in this project.
+# --- Columns -----------------------------------------------------------------------------
+
+# Raw column name -> short name used in this project.
 COLUMNS = {
     "Balancing Authority": "ba",
     "Region": "region",
@@ -22,52 +26,64 @@ COLUMNS = {
     "Demand (MW)": "demand_mw",
     "Demand Forecast (MW)": "forecast_mw",
 }
-# Category for repeated text cuts memory several-fold; float keeps NaN for missing values.
+
+# "category" stores repeated text (BA codes, regions) once, which saves a lot of memory.
+# "float64" keeps missing values as NaN instead of turning the column into whole numbers.
 DTYPES = {
     "Balancing Authority": "category",
     "Region": "category",
     "Demand (MW)": "float64",
     "Demand Forecast (MW)": "float64",
 }
-TIMESTAMP_FORMAT = "%m/%d/%Y %I:%M:%S %p"  # e.g. "01/01/2021 7:00:00 AM", no zone; it is UTC
+
+# Example: "01/01/2021 7:00:00 AM". The file gives no time zone, but the column is UTC.
+TIMESTAMP_FORMAT = "%m/%d/%Y %I:%M:%S %p"
 
 
 def read_balance_file(path: Path) -> pd.DataFrame:
-    """Read one balance CSV and return the COLUMNS, renamed.
+    """Read one balance CSV and return the five COLUMNS, renamed.
 
-    Output dtypes: ba, region -> category; utc_end -> datetime (UTC);
-    demand_mw, forecast_mw -> float64 (missing stays NaN).
-
-    Raise ValueError naming the file if any column in COLUMNS is absent.
+    Raise ValueError naming the file if any needed column is missing.
     """
+    # Check the header first, so a bad file fails with a clear message.
     header = pd.read_csv(path, nrows=0).columns
-    missing = [col for col in COLUMNS if col not in header]
+    missing = [column for column in COLUMNS if column not in header]
     if missing:
         raise ValueError(f"{path.name} is missing required columns: {missing}")
 
-    data = pd.read_csv(path, usecols=list(COLUMNS), dtype=DTYPES).rename(columns=COLUMNS)
+    data = pd.read_csv(path, usecols=list(COLUMNS), dtype=DTYPES)
+    data = data.rename(columns=COLUMNS)
+
+    # A wrongly formatted timestamp raises an error here (a blank one becomes NaT).
     data["utc_end"] = pd.to_datetime(data["utc_end"], format=TIMESTAMP_FORMAT, utc=True)
+
     return data
 
 
 def load_balance(raw_dir: Path = RAW_DIR) -> pd.DataFrame:
-    """Read every balance file in raw_dir into one frame, sorted by (ba, utc_end).
+    """Read every balance file into one table, sorted by (ba, utc_end).
 
-    Adds a `source_file` column. Raise if the file count is not EXPECTED_FILES or if
-    any (ba, utc_end) pair appears more than once (within or across files).
+    Adds a `source_file` column. Raise if there are not EXPECTED_FILES files, or if any
+    (ba, utc_end) pair appears more than once.
     """
     files = sorted(raw_dir.glob(FILE_GLOB))
     if len(files) != EXPECTED_FILES:
         raise ValueError(f"Expected {EXPECTED_FILES} files in {raw_dir}, found {len(files)}")
 
-    df = pd.concat(
-        [read_balance_file(f).assign(source_file=f.name) for f in files], ignore_index=True
-    )
-    # Categories differ by file (BAs come and go), so concat falls back to text; restore.
+    # Read each file and remember where every row came from.
+    tables = []
+    for file in files:
+        table = read_balance_file(file)
+        table["source_file"] = file.name
+        tables.append(table)
+    df = pd.concat(tables, ignore_index=True)
+
+    # Each file has its own list of BAs, so concat turns the categories back into text.
     df = df.astype({"ba": "category", "region": "category", "source_file": "category"})
 
-    dupes = df.duplicated(["ba", "utc_end"], keep=False)
-    if dupes.any():
-        raise ValueError(f"Duplicate (ba, utc_end) pairs:\n{df[dupes].head(10)}")
+    # The same BA and hour twice would be counted twice later, so stop here instead.
+    duplicates = df.duplicated(["ba", "utc_end"], keep=False)
+    if duplicates.any():
+        raise ValueError(f"Duplicate (ba, utc_end) pairs:\n{df[duplicates].head(10)}")
 
     return df.sort_values(["ba", "utc_end"], ignore_index=True)
