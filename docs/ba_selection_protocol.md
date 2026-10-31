@@ -1,98 +1,67 @@
 # BA selection protocol
 
-Status: **frozen; results recorded (2026-10-29).** Region source: EIA `Region` column. The resulting BA list is filled in
-`docs/ba_selection_results.md`. No model may be fit or compared until that file is committed.
-The 95% thresholds are provisional until this protocol is finalized; after that they may not change in
-response to model results. If the constraints cannot be met, stop, report the conflict, and propose a rule
-revision before any model is examined.
+**Status: frozen. Results recorded 2026-10-29** in [`ba_selection_results.md`](ba_selection_results.md).
+These rules were fixed before any model was fit or compared, and may not change because of model results.
+Reworded for clarity on 2026-10-30; the rules did not change.
 
-## Frozen inputs
+## Inputs
 
-1. **Study window (UTC), inclusive of Jan 1, 2021 through Oct 23, 2026.** An hour is identified by its
-   `UTC Time at End of Hour` stamp and belongs to the year its interval *starts* in. The window contains the
-   hours ending 2021-01-01 01:00 UTC through 2026-10-24 00:00 UTC, 50,928 hours.
-   - The last date with a complete day in the 2026 H2 file is Oct 23. On Oct 24 (local date), 53 BAs (every BA that reports demand) lack all
-     24 demand hours; local Oct 24 begins no earlier than 04:00 UTC for any U.S. BA, so ending the window at
-     2026-10-24 00:00 UTC keeps every BA's local Oct 24 out of it.
-   - The incomplete final date is cut from the window, so it neither counts as missing nor enters evaluation.
-   - Rationale for 2021: matches the Open-Meteo forecast archive start (to be re-checked when weather is chosen).
-2. **Years used**: 2021, 2022, 2023, 2024, 2025, 2026 (partial). Expected hours per year, which the code must
-   reproduce exactly (acceptance test): 2021 = 8,760; 2022 = 8,760; 2023 = 8,760; 2024 = 8,784; 2025 = 8,760;
-   2026 = 7,104; total = 50,928.
-3. **Region assignment**: the EIA `Region` value for each BA. Assert that each BA has exactly one in the window;
-   if not, report it as a conflict. (Source file to be named in the results file.)
-4. **Excluded BAs** (revision 1): AVA, FPC, GVL, LGEE, PSEI, SEC, SPA, TEPC. EIA's EIA-930 about page says
-   comparing their forecast with actual demand is "not very meaningful", so they cannot give a fair benchmark.
-   They still appear in the coverage table, with reason "excluded: EIA forecast caveat".
-
-Files needed: the six-month balance files 2021 H1 through 2026 H2 (12 files). Only 2022 H1 and 2026 H2 headers have
-been compared so far; check the other ten for the columns used (BA, UTC end-of-hour stamp, `Demand (MW)`,
-`Demand Forecast (MW)`, `Region`) before loading, and log any file boundary overlaps or duplicates.
+1. **Window:** hours ending 2021-01-01 01:00 UTC to 2026-10-24 00:00 UTC (50,928 hours). An hour belongs to
+   the year it *starts* in. The window ends before local Oct 24, 2026, which has no demand for any BA, so that
+   day neither counts as missing nor enters evaluation. The 2021 start was set before the weather source was
+   chosen.
+2. **Expected hours per year** (the code must match): 2021-2023 and 2025 = 8,760; 2024 = 8,784;
+   2026 = 7,104; total 50,928.
+3. **Region:** the EIA `Region` column. Each BA must have exactly one in the window, or it is a conflict.
+4. **Excluded BAs** (revision 1): AVA, FPC, GVL, LGEE, PSEI, SEC, SPA, TEPC. EIA says their forecasts don't
+   compare well with actual demand. They still appear in the coverage table, with reason
+   `excluded: EIA forecast caveat`.
+5. **Files:** the 12 balance files, 2021 H1 to 2026 H2. Before loading, check every file has the columns used
+   and log any overlaps or duplicates between files.
 
 ## Definitions
 
-- **Expected hours** for a BA and year: every UTC hour of the window that starts inside that year. Missing rows count as
-  missing, so coverage is computed against the calendar, not against the rows present.
-- **Reported demand coverage**: share of expected hours with a non-missing `Demand (MW)` that is also valid
-  (greater than zero). `Demand (MW) (Imputed)` and `(Adjusted)` are never used or counted.
-- **Forecast coverage**: share of expected hours with a non-missing, greater-than-zero `Demand Forecast (MW)`.
-- Non-positive demand is treated as invalid for coverage only; it is not dropped from the raw record.
-  Count and report how many hours this affects per BA. (Provisional; revisit under the same freeze rule.)
-- **Mean demand**: average of valid reported demand over the same window for all BAs, computed per BA from its
-  own valid hours. Because every BA uses the identical window, rankings are comparable.
-- Daylight saving: work on UTC hours. Duplicate or missing UTC hours in the source are logged and counted as
-  missing.
+- **Expected hours:** every window hour that starts in the year. Absent rows count as missing.
+- **Valid:** present and greater than 0. Imputed and adjusted demand are never used.
+- **Demand coverage** and **forecast coverage:** valid hours / expected hours, for `Demand (MW)` and
+  `Demand Forecast (MW)`.
+- **Mean demand:** average of a BA's valid demand over the window.
+- Values <= 0 count as invalid for coverage but stay in the raw data; count them per BA.
+- Work in UTC. Duplicate or missing UTC hours are logged and counted as missing.
 
-## Algorithm (deterministic)
+## Steps
 
-1. For each BA and each year used, compute reported demand coverage and forecast coverage.
-2. **Eligible set** = BAs not excluded under input 4, with both coverages >= 0.95 in **every** year used.
-3. Sort eligible BAs by mean demand descending; break ties by BA code ascending. This is the ranking `R`.
-4. Initial selection `S` = first 10 of `R`. (If fewer than 10 are eligible, stop: conflict.)
-5. If `S` spans >= 4 distinct regions, finish.
-6. Otherwise repair, repeating until 4 regions are spanned:
-   - find the highest-ranked BA in `R` not in `S` whose region is **not** in `S`;
-   - find the lowest-ranked BA in `S` whose region has at least two members in `S`;
-   - swap them.
-   If no such BA exists, stop: conflict.
-7. Final list = `S` sorted by ranking.
+1. Compute both coverages for each BA and year.
+2. **Eligible:** not excluded, and both coverages >= 95% in every year.
+3. Rank eligible BAs by mean demand, largest first; break ties by BA code (A to Z).
+4. Take the top 10. Fewer than 10 eligible is a conflict.
+5. If they span at least 4 regions, stop.
+6. Otherwise swap until 4 regions are covered: bring in the highest-ranked unselected BA from a region not
+   yet selected, and drop the lowest-ranked selected BA whose region has at least 2 selected. No such pair is a
+   conflict.
+7. The final list is in rank order.
 
-## Coverage table the code must produce
+## Outputs
 
-One row per BA and calendar year (all BAs present in any file, including ones that fail), columns:
+**Coverage table:** one row per BA and year, for every BA in the files. Columns: `ba`, `region`, `year`,
+`expected_hours`, `rows_present` (after logging duplicates), `valid_demand_hours`, `demand_coverage`,
+`valid_forecast_hours`, `forecast_coverage`, `demand_pass`, `forecast_pass`.
 
-| Column | Meaning |
-|---|---|
-| `ba`, `region`, `year` | identifiers |
-| `expected_hours` | calendar hours of the window in that year |
-| `rows_present` | rows in the files for that BA and year (after logging duplicates) |
-| `valid_demand_hours` | non-missing reported `Demand (MW)` > 0 |
-| `demand_coverage` | `valid_demand_hours / expected_hours` |
-| `valid_forecast_hours` | non-missing `Demand Forecast (MW)` > 0 |
-| `forecast_coverage` | `valid_forecast_hours / expected_hours` |
-| `demand_pass`, `forecast_pass` | coverage >= 0.95 |
+Also per BA: hours with demand <= 0 and forecast <= 0, duplicate hours, and rows outside the window.
+Log each swap with both BAs, their regions, and their ranks.
 
-Also report per BA: count of hours with demand <= 0 and forecast <= 0 (excluded as invalid), duplicate UTC
-stamps, and rows outside the window. A BA is eligible only if all its yearly `demand_pass` and `forecast_pass` are
-true. Every swap in step 6 is logged with both BAs, their regions, and their ranks.
-
-## Records to commit before modeling
-
-In `docs/ba_selection_results.md`:
-- the frozen window, years used, and region assignment source;
-- the full per-BA, per-year coverage table (all BAs, eligible or not, with the reason for exclusion);
-- the 5 BAs closest to the cutoff on each side, with their coverage and mean demand;
-- the final list, with swaps made in step 6 if any;
-- the effect of incomplete dates and other reporting gaps on coverage (hours cut, hours counted missing);
-- the commit hash of the code that produced the table.
+**Results file**, committed before any model is fit: the window, years used, and region source; the full
+coverage table with reasons for exclusion; the 5 BAs on each side of the cutoff, with their coverage and mean
+demand; the final list and any swaps; the effect of gaps (hours cut, hours counted missing); the commit hash
+of the code.
 
 ## Conflicts
 
-Conflict examples: fewer than 10 eligible BAs, fewer than 4 regions available, a BA with more than one region.
-Report the numbers and propose a revision in a separate commit, before any model results exist. State
-explicitly that no model had been fit at the time.
+For example: fewer than 10 eligible, fewer than 4 regions, or a BA with two regions. Stop, report the
+numbers, and propose a revision in its own commit before any model is examined. State that no model had
+been fit.
 
 ## Revisions
 
-1. **2026-10-29: exclude 8 BAs EIA flags** (input 4, algorithm step 2). Reason: EIA documentation, not data or
-   results. No coverage table had been computed and no model had been fit at the time.
+1. **2026-10-29:** excluded the 8 BAs EIA flags (input 4, step 2). Based on EIA documentation only; no
+   coverage table or model existed yet.
