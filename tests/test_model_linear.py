@@ -27,10 +27,11 @@ def test_twelve_monthly_blocks_from_validation_start():
     assert starts[0] == dt.date(2024, 10, 24) and starts[-1] == dt.date(2025, 9, 24)
 
 
-def test_training_rows_end_before_the_block():
+def test_training_rows_stop_two_days_before_the_block():
+    # Nov 23's evening is not known at 6 p.m. on Nov 23, when Nov 24 is forecast.
     df = daily_frame(dt.date(2024, 9, 1), 120)
     rows = ml.training_rows(df, dt.date(2024, 11, 24))
-    assert rows["local_date"].max() == dt.date(2024, 11, 23)
+    assert rows["local_date"].max() == dt.date(2024, 11, 22)
 
 
 def test_training_rows_skip_unusable():

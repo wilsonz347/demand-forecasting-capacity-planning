@@ -44,6 +44,8 @@ Details:
   data. Before claiming a win, repeat the comparison with an earlier cutoff (e.g. 8 a.m.). If the win only
   holds at 6 p.m., say so.
 - **Time zones:** each BA's in `build_dataset.py`. MISO uses Eastern Standard Time all year.
+- **Holidays:** U.S. federal holidays, including minor ones (e.g. Columbus Day). The day after
+  Thanksgiving and Christmas Eve are not flagged. Revisit if holiday errors stand out.
 - **Weather caveats:** BPAT's city weights are rough. The publication time of each run is **not verified**:
   usually a few hours after the run, but one informal NWS note says about 10 hours, which would reach 6 p.m.
   Eastern daylight time. We kept the 12:00 UTC run anyway.

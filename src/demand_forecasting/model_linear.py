@@ -6,6 +6,8 @@ It is scored against the baselines on exactly the same hours. The test split is 
 on load. Run with `python -m demand_forecasting.model_linear`.
 """
 
+import datetime as dt
+
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
@@ -54,8 +56,12 @@ def usable(df: pd.DataFrame) -> pd.Series:
 
 
 def training_rows(df: pd.DataFrame, block_start) -> pd.DataFrame:
-    """Usable rows dated before block_start (never the block itself or later)."""
-    return df[usable(df) & (df["local_date"] < block_start)]
+    """Usable rows dated at least two days before block_start.
+
+    The block's first day is forecast at 6 p.m. on the day before, when that day's evening
+    demand is not yet known. Dropping the whole day before keeps training to known data.
+    """
+    return df[usable(df) & (df["local_date"] < block_start - dt.timedelta(days=1))]
 
 
 def predict_validation(df: pd.DataFrame) -> pd.Series:
