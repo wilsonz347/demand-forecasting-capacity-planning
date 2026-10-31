@@ -44,8 +44,8 @@ Reworded for clarity on 2026-10-30; the rules did not change.
 ## Outputs
 
 **Coverage table:** one row per BA and year, for every BA in the files. Columns: `ba`, `region`, `year`,
-`expected_hours`, `rows_present` (after logging duplicates), `valid_demand_hours`, `demand_coverage`, `valid_forecast_hours`,
-`forecast_coverage`, `demand_pass`, `forecast_pass`.
+`expected_hours`, `rows_present` (after logging duplicates), `valid_demand_hours`, `demand_coverage`,
+`valid_forecast_hours`, `forecast_coverage`, `demand_pass`, `forecast_pass`.
 
 Also per BA: hours with demand <= 0 and forecast <= 0, duplicate hours, and rows outside the window.
 Log each swap with both BAs, their regions, and their ranks.
