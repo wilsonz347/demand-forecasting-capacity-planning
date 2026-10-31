@@ -16,7 +16,8 @@ Nothing in this folder is committed except this file (see `.gitignore`).
 **NWS GFS MOS forecasts (weather), via the Iowa Environmental Mesonet**
 - Archived airport-station forecasts: https://mesonet.agron.iastate.edu/mos/
 - Downloaded by `python -m demand_forecasting.weather` into `data/raw/weather/` (one CSV per station).
-- Terms of use not yet confirmed. Open-Meteo was the considered fallback.
+- Public domain per the IEM disclaimer (https://mesonet.agron.iastate.edu/disclaimer.php); attribution appreciated.
+  Open-Meteo was the considered fallback.
 
 ## How to get the balance files (manual)
 

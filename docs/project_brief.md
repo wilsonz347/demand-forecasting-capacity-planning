@@ -85,7 +85,9 @@ Measured facts for all 12 balance files (counts, coverage, gaps, duplicates, reg
 
    - Stations and populations are in `weather.py`.
    - Caveat: BPAT's load is spread over many small utilities, so its city weights are a rough proxy.
-   - Not verified: IEM terms of use and the exact publication delay of each run.
+   - Terms: IEM data are public domain ("may be used freely by anyone for any lawful purpose"); credit IEM in the report.
+   - Not verified: the publication delay of each run. Usually a few hours, but no official figure was found;
+     one informal NWS note says about 10 hours, which would reach 6 p.m. EDT. Kept the 12Z run (2026-10-30).
 6. **Anomalous values.** Reported demand can contain spikes, zeros, or negatives, and non-positive forecasts jumped in 2025 H2 and 2026 H1 (see manifest). Define a screening rule before modeling and record how many rows it affects.
    **Decided (2026-10-29):** a value is invalid if missing, <= 0, or above 1.5 x the BA's 99.9th percentile of
    valid train-period demand (`screening.py`; same rule for the forecast). Removed in train + validation:
