@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Probabilistic hourly demand forecasting and the capacity-commitment decision it supports."
 requires-python = ">=3.11"
 dependencies = [
+    "holidays>=0.107",
     "pandas>=2.2",
     "pyarrow>=26.0.0",
 ]
