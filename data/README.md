@@ -30,4 +30,15 @@ uv run python -m demand_forecasting.ba_selection   # BA selection tables
 uv run python -m demand_forecasting.build_dataset  # data/derived/dataset.parquet
 uv run python -m demand_forecasting.weather        # data/derived/dataset_weather.parquet
 uv run python -m demand_forecasting.baselines      # baseline scores
+uv run python -m demand_forecasting.features       # data/derived/features.parquet
+uv run python -m demand_forecasting.model_gbm      # ridge + XGBoost validation scores
+uv run python -m demand_forecasting.model_quantile # validation ranges (about 20 minutes)
+uv run python -m demand_forecasting.decision       # validation costs
+```
+
+Final test year (run once):
+
+```
+uv run python -m demand_forecasting.model_quantile test
+uv run python -m demand_forecasting.decision test
 ```

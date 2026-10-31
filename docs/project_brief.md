@@ -7,9 +7,11 @@ the operator's own forecast. See the [README](../README.md) for the question.
 
 ## Scope
 
-- **In:** about 10 BAs chosen by fixed rules; time-ordered splits; baselines first; regularized linear and
-  gradient-boosted quantile models; cost simulation across cost ratios; bootstrap intervals; a short report.
-- **Later, if time allows:** more BAs; other calibration methods; extreme-day and seasonal analysis.
+- **Done:** 10 BAs chosen by fixed rules; time-ordered splits; baselines; ridge and XGBoost models;
+  quantile XGBoost for ranges; cost comparison across cost ratios; one final test-year run.
+  Results: [`results.md`](results.md).
+- **Not done (possible extensions):** bootstrap intervals; the 8 a.m. cutoff check; recalibrating
+  narrow ranges (e.g. conformal); more BAs; extreme-day and seasonal analysis.
 - **Out:** deep learning, LLMs, dashboards; prices or dispatch; causal claims.
 
 ## Data facts
@@ -36,6 +38,11 @@ Measured facts about the files are in [`data/MANIFEST.md`](../data/MANIFEST.md).
 | Start of 2021 | First 5-8 hours (local Dec 31, 2020) count as missing | Not in our files; tiny effect |
 | Bad values | Invalid if missing, <= 0, or above 1.5 x the BA's train 99.9th percentile (same rule for forecasts) | Removes recording errors, keeps real peaks |
 | Weather | NWS airport forecasts (IEM archive), 12:00 UTC run of the day before, filled to hourly, 2-3 airports per BA weighted by 2020 population | Time-stamped forecasts, so no look-ahead; humidity for all years |
+| Inputs | Hour, weekday, month, holiday; heating/cooling degrees from 18 °C and dewpoint; demand 48 h and 168 h earlier and at 6 p.m. the day before | All known at the cutoff |
+| Models | Ridge (alpha 1) and XGBoost (300 trees, learning rate 0.05, other defaults), one per BA, refit monthly on days at least 2 days before each block | Simple first; XGBoost learns interactions such as hour x heat |
+| Ranges | XGBoost with the quantile loss, 5th to 95th percentile in steps of 5 | The decision needs a percentile, not the average |
+| Cost ratios | 1, 3, 9, 19 (shortfall vs surplus), committing the ratio / (ratio + 1) percentile | Real costs are unknown; each maps to a forecast percentile |
+| Operator baseline | Its forecast plus that percentile of its past errors (earlier years only) | A fair version of the same decision |
 
 Details:
 - **Bad values removed** (train + validation): PJM 3 hours (2021, up to 2.1 billion MW), SOCO 3 (Feb 2025),
@@ -63,5 +70,4 @@ Details:
 ## Deliverables
 
 - Code in the repo that reproduces every number, with tests where they protect a result.
-- A short report (5-8 pages): question, data, method, results with uncertainty, limits.
-- Figures: range calibration, cost vs cost ratio, per-BA comparison.
+- [`results.md`](results.md): the answer, with the test-year tables. (No separate report.)
