@@ -50,16 +50,16 @@ def add_baselines(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def score(df: pd.DataFrame) -> pd.DataFrame:
+def score(df: pd.DataFrame, methods: list[str] = METHODS) -> pd.DataFrame:
     """MAE (MW) and MAPE (%) per BA and method, on validation hours only.
 
-    Scored hours: split == "validation", valid demand, and all METHODS present, so every
+    Scored hours: split == "validation", valid demand, and all `methods` present, so every
     method is judged on exactly the same hours. Returns columns
     ba, method, hours, mae_mw, mape_pct.
     """
     rows = df[df["split"] == "validation"].assign(actual=lambda d: valid(d["demand_mw"]))
-    rows = rows.dropna(subset=["actual", *METHODS])
-    long = rows.melt(id_vars=["ba", "actual"], value_vars=METHODS,
+    rows = rows.dropna(subset=["actual", *methods])
+    long = rows.melt(id_vars=["ba", "actual"], value_vars=methods,
                      var_name="method", value_name="forecast")
     long["abs_error"] = (long["forecast"] - long["actual"]).abs()
     long["pct_error"] = 100 * long["abs_error"] / long["actual"]
