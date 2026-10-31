@@ -18,5 +18,8 @@ def test_gbm_learns_an_interaction_that_ridge_cannot():
     def mae(pred):
         return (pred[val] - df.loc[val, "demand_mw"]).abs().mean()
 
-    gbm, ridge = mae(ml.predict_validation(df, make=gb.make_model)), mae(ml.predict_validation(df))
-    assert gbm < 3 and gbm < ridge / 2
+    gbm_error = mae(ml.predict_validation(df, make=gb.make_model))
+    ridge_error = mae(ml.predict_validation(df))
+
+    assert gbm_error < 3
+    assert gbm_error < ridge_error / 2

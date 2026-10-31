@@ -12,6 +12,7 @@ from demand_forecasting import baselines, model_linear
 from demand_forecasting.load import ROOT
 
 # XGBoost's defaults, except these two. Not tuned yet (tuning uses validation only).
+# Note: it is fit on squared error but scored on MAE/MAPE, like ridge; revisit when tuning.
 SETTINGS = {
     "n_estimators": 300,  # number of trees added one after another
     "learning_rate": 0.05,  # how much of each tree's correction is kept

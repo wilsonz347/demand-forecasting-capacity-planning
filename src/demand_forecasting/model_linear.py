@@ -36,7 +36,7 @@ INPUTS = CATEGORICAL + NUMERIC
 
 # --- Settings ----------------------------------------------------------------------------
 
-ALPHA = 1.0  # ridge penalty strength; changing it barely moved validation scores
+ALPHA = 1.0  # ridge penalty strength; fixed for now (tuning uses validation only)
 N_BLOCKS = 12  # one-month validation blocks, starting at VALIDATION_FIRST_DATE
 
 OUT_DIR = ROOT / "data" / "derived" / "model_linear"

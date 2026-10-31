@@ -54,7 +54,7 @@ def read_balance_file(path: Path) -> pd.DataFrame:
     data = pd.read_csv(path, usecols=list(COLUMNS), dtype=DTYPES)
     data = data.rename(columns=COLUMNS)
 
-    # A malformed timestamp raises an error here instead of silently becoming NaT.
+    # A wrongly formatted timestamp raises an error here (a blank one becomes NaT).
     data["utc_end"] = pd.to_datetime(data["utc_end"], format=TIMESTAMP_FORMAT, utc=True)
 
     return data

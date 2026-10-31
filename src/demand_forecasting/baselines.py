@@ -5,7 +5,8 @@ Baselines:
 - week_avg: average of the same hour 1, 2, 3, and 4 weeks earlier.
 - operator: the operator's own day-ahead forecast.
 
-Every input is at least 7 days old, so all of them respect the 6 p.m. day-before cutoff.
+last_week and week_avg use only demand 7+ days old, so they respect the 6 p.m. cutoff.
+The operator forecast's issue time is not documented (see the brief's open questions).
 "Last week" means 168 hours in UTC, so for about a week after each clock change it is one
 local hour off. Test rows are dropped on load, and values are screened first.
 Run with `python -m demand_forecasting.baselines`.
