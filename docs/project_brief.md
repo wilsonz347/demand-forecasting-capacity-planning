@@ -70,24 +70,12 @@ Measured facts for all 12 balance files (counts, coverage, gaps, duplicates, reg
 2. **Which demand variant the forecast tracks** (reported vs adjusted), per BA.
 3. **Window start.** Every BA lacks its first 5-8 window hours (local Dec 31, 2020, in the 2020 H2 file). **Decided (2026-10-29):** count them as missing.
 4. **Terms of use.** Resolved for EIA: public domain; cite as "Source: U.S. Energy Information Administration (date)". The Zenodo copy is not used.
-5. **Weather.** **Decided (2026-10-30):** forecast weather only (no actual weather).
-
-   | Decision | Why |
-   |---|---|
-   | Use weather at all | Temperature is the main driver of demand (cooling and heating). The naive baselines lack it, and the operators use it. |
-   | Forecast weather, not actual | At 6 p.m. on D-1 only the forecast for D is known. Actual weather would be look-ahead (rule 1). |
-   | NWS GFS MOS, archived by the Iowa Environmental Mesonet | Each forecast is stamped with its run time, so the cutoff can be proven. It has temperature and dewpoint (humidity) for all of 2021-2026. Free. |
-   | Not Open-Meteo | Its Historical Forecast archive stitches the first hours of each run (close to actual weather). Its Previous Runs archive has temperature from 2021-03-24 only, with a gap around Jan 2024, and humidity from 2024. |
-   | Run: latest at or before 12:00 UTC on D-1 | Issued in the U.S. morning, well before the 6 p.m. cutoff, and it covers all of day D. The 12Z run exists every day for all 29 stations except 2025-05-29 (serving D = 2025-05-30), where the 06Z run is used. Temperature is the instant value at the end of each hour. |
-   | Linear interpolation (3-hourly to hourly), within one run | Temperature changes smoothly over a few hours. Not interpolating across runs keeps each hour tied to one issue time. |
-   | 2-3 airports per BA | A BA covers a large region. Airports near its biggest cities cover most of its demand. |
-   | Weights = 2020 Census metro population, fixed | Bigger cities use more electricity. 2020 predates all data (no look-ahead), and the city shares barely change over the window. |
-
-   - Stations and populations are in `weather.py`.
-   - Caveat: BPAT's load is spread over many small utilities, so its city weights are a rough proxy.
-   - Terms: IEM data are public domain ("may be used freely by anyone for any lawful purpose"); credit IEM in the report.
-   - Not verified: the publication delay of each run. Usually a few hours, but no official figure was found;
-     one informal NWS note says about 10 hours, which would reach 6 p.m. EDT. Kept the 12Z run (2026-10-30).
+5. **Weather.** **Decided (2026-10-30):** forecast weather only (actual weather would be look-ahead).
+   - Source: NWS airport forecasts (temperature, dewpoint), archived by Iowa State (IEM). Public domain.
+   - For local day D: the 12:00 UTC run of D-1, issued well before the 6 p.m. cutoff.
+   - Hourly values by linear interpolation. Per BA: 2-3 big-city airports, weighted by 2020 population.
+   - Why this source: each forecast is time-stamped, and humidity is available for all years.
+   - Caveats: BPAT's city weights are rough; the exact publication time of each run is not documented.
 6. **Anomalous values.** Reported demand can contain spikes, zeros, or negatives, and non-positive forecasts jumped in 2025 H2 and 2026 H1 (see manifest). Define a screening rule before modeling and record how many rows it affects.
    **Decided (2026-10-29):** a value is invalid if missing, <= 0, or above 1.5 x the BA's 99.9th percentile of
    valid train-period demand (`screening.py`; same rule for the forecast). Removed in train + validation:
