@@ -4,7 +4,8 @@
 own forecast?
 
 **Answer:** no, for most grids. On the untouched test year, the operator's forecast plus a
-margin was cheaper in 7 of 10 BAs at every cost ratio.
+margin was cheaper in 8 of 10 BAs at every cost ratio. If the operator's forecast uses more
+information than our 6 p.m. cutoff allows, that can only make its win look larger.
 
 Test year: local dates 2025-10-24 to 2026-10-23, run once with frozen models (commit `e3ff7f2`).
 
@@ -18,7 +19,7 @@ Ratio = cost of 1 MW short vs 1 MW extra.
 | CISO | +52% | +66% | +76% | +76% |
 | DUK | -3% | +12% | +35% | +42% |
 | PJM | -1% | -9% | -13% | -32% |
-| MISO | -57% | -60% | -63% | -98% |
+| MISO | -57% | -60% | -62% | -98% |
 | TVA | -60% | -71% | -80% | -119% |
 | ISNE | -94% | -66% | -58% | -68% |
 | NYIS | -94% | -78% | -68% | -105% |
@@ -26,22 +27,23 @@ Ratio = cost of 1 MW short vs 1 MW extra.
 | ERCO | -116% | -129% | -135% | -158% |
 | SOCO | -398% | -292% | -205% | -266% |
 
-- **CISO** does not count as a win: its operator forecast misses midday demand by a growing amount.
+- **CISO** does not count as a win: its operator forecast has a growing bias (it under-forecasts
+  midday demand more each year; found in an exploratory check, not in repo code).
 - **DUK** wins when shortfalls are costly, but lost on the validation year. Unconfirmed.
-- **PJM** won slightly on validation (+6 to +9%) but not on test.
+- **PJM** won slightly on validation (+6 to +9%, except -19% at 19:1) but lost at every ratio on test.
 
 ## Ranges: share of hours inside the 10-90% range (target 80%)
 
 | BA | Test | Validation |
 |---|---:|---:|
-| SOCO | 81% | 83% |
+| SOCO | 81% | 82% |
 | DUK | 80% | 83% |
 | MISO | 80% | 83% |
 | TVA | 79% | 84% |
-| PJM | 79% | 80% |
-| CISO | 78% | 81% |
-| ISNE | 74% | 76% |
+| PJM | 78% | 80% |
+| CISO | 77% | 81% |
 | NYIS | 74% | 77% |
+| ISNE | 74% | 76% |
 | BPAT | 71% | 80% |
 | ERCO | 71% | 71% |
 

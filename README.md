@@ -7,8 +7,9 @@ to cheaper decisions than the operator's own forecast?
 The case study is the U.S. power grid (EIA-930 hourly data). The same problem appears in inventory,
 staffing, and cloud capacity.
 
-> **Status: done.** On the untouched test year, the operator's forecast plus a margin was cheaper
-> than our range forecast in 7 of 10 BAs. See [`docs/results.md`](docs/results.md).
+> **Status: done (without confidence intervals; see Limits in [`docs/results.md`](docs/results.md)).**
+> On the untouched test year, the operator's forecast plus a margin was cheaper than our range
+> forecast in 8 of 10 BAs at every cost ratio.
 
 ## Why a range matters
 
